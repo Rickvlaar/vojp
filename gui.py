@@ -69,8 +69,8 @@ class Gui:
         audio_output_device_name = self.output_device_var.get()
 
         print('clicked!')
-        print('input ' + audio_input_device_name)
-        print('output ' + audio_output_device_name)
+        print('input: ' + audio_input_device_name)
+        print('output: ' + audio_output_device_name)
         self.gui.quit()
 
         loop = asyncio.get_running_loop()

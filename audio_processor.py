@@ -1,6 +1,5 @@
 import queue
 import asyncio
-import ffmpeg
 import opuslib
 import sounddevice as sd
 import soundfile as sf
@@ -9,21 +8,22 @@ import numpy as np
 
 class AudioProcessor:
 
-    def __init__(self, sample_rate=48000, audio_per_packet=0.0025, channels=1, audio_input_device_name='default', audio_output_device_name='default'):
+    def __init__(self, sample_rate=48000, audio_per_packet=0.0025, channels=1, audio_input_device_name='default',
+                 audio_output_device_name='default'):
         """
         Parameters
         ----------
         sample_rate: integer, optional; Defaults to 48000
              the audio sample rate in hertz
         audio_per_packet: float, optional; Defaults to 0.01 which equals 10 milliseconds
-            audio chunck size in seconds
+            audio fragment length in seconds
         channels: integer, optional; Defaults to 1
-            number of channels, either 1 or 2 for mono and stereo.
+            number of channels, either 1 for mono or 2 for stereo.
         """
         self.sample_rate = sample_rate
         self.audio_per_packet = audio_per_packet
         self.channels = channels
-        self.frame_size = int(sample_rate * audio_per_packet * channels)  # Synonimous to blocksize
+        self.frame_size = int(sample_rate * audio_per_packet * channels)  # Synonymous to block size
         print(self.frame_size)
         self.opus_encoder = opuslib.Encoder(fs=self.sample_rate,
                                             channels=self.channels,
@@ -33,10 +33,10 @@ class AudioProcessor:
         self.output_buffer = queue.Queue()
 
         if audio_input_device_name != 'default':
-            sd.default.device = audio_input_device_name
+            sd.default.device[0] = audio_input_device_name
             print(sd.default.device)
         if audio_output_device_name != 'default':
-            sd.default.device = audio_output_device_name
+            sd.default.device[1] = audio_output_device_name
             print(sd.default.device)
 
     async def get_mic_input(self):
@@ -67,9 +67,14 @@ class AudioProcessor:
 
         queue_out = queue.Queue()
 
+        # Create buffer for starting the audio stream. Prevents beeping sound
+        buffer = b'\x00' * self.frame_size * sd.default.channels[1]
+        queue_out.put_nowait(buffer)
+
         def proces_output_stream(outdata, frame_count, time_info, status):
             if queue_out.qsize() != 0:
                 outdata[:] = queue_out.get_nowait()
+
 
         output_stream = sd.RawOutputStream(callback=proces_output_stream,
                                            samplerate=self.sample_rate,
