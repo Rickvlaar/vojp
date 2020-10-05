@@ -50,6 +50,7 @@ class AudioProcessor:
                             samplerate=self.sample_rate,
                             channels=self.channels,
                             blocksize=self.frame_size,
+                            latency='low',
                             dtype='int16'):
             while True:
                 indata, status = await queue_in.get()
@@ -68,18 +69,18 @@ class AudioProcessor:
         queue_out = queue.Queue()
 
         # Create buffer for starting the audio stream. Prevents beeping sound
-        buffer = b'\x00' * self.frame_size * sd.default.channels[1]
+        buffer = b'\x00' * self.frame_size * 2
         queue_out.put_nowait(buffer)
 
         def proces_output_stream(outdata, frame_count, time_info, status):
             if queue_out.qsize() != 0:
                 outdata[:] = queue_out.get_nowait()
 
-
         output_stream = sd.RawOutputStream(callback=proces_output_stream,
                                            samplerate=self.sample_rate,
                                            channels=self.channels,
                                            blocksize=self.frame_size,
+                                           latency='low',
                                            dtype='int16')
 
         with output_stream:
