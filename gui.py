@@ -71,8 +71,25 @@ class Gui:
         print('clicked!')
         print('input: ' + audio_input_device_name)
         print('output: ' + audio_output_device_name)
+
+        asyncio.gather(start_client(ip, port, audio_input_device_name, audio_output_device_name),
+                       self.do_some_thing_gui())
+
         self.gui.quit()
 
-        loop = asyncio.get_running_loop()
-        loop.create_task(start_client(ip, port, audio_input_device_name, audio_output_device_name))
+    async def do_some_thing_gui(self):
+        while True:
+            try:
+                self.gui.update()
+            except:
+                loop = asyncio.get_running_loop()
+                tasks = [task for task in asyncio.all_tasks() if task is not asyncio.current_task()]
+                [task.cancel() for task in asyncio.all_tasks()]
+                try:
+                    await asyncio.gather(*tasks)
+                except asyncio.CancelledError:
+                    print('dont care')
+                finally:
+                    loop.stop()
 
+            await asyncio.sleep(0.1)

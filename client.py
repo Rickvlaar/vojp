@@ -13,7 +13,7 @@ class UdpClient(asyncio.DatagramProtocol):
         self.audio_processor = AudioProcessor(audio_input_device_name=audio_input_device_name,
                                               audio_output_device_name=audio_output_device_name)
         self.server_address = (ip, port)
-        self.recording = False
+        self.recording = True
         self.recording_file = sf.SoundFile(file='test.wav', mode='w', samplerate=48000, channels=1)
         asyncio.create_task(self.start_client())
 
@@ -40,8 +40,7 @@ class UdpClient(asyncio.DatagramProtocol):
                 self.transport.sendto(input_packet, self.server_address)
 
     async def record_audio_stream(self, audio_packet):
-        with self.recording_file as file:
-            file.buffer_write(audio_packet, dtype='int16')
+        self.recording_file.buffer_write(audio_packet, dtype='int16')
 
     async def start_client(self):
         loop = asyncio.get_running_loop()
@@ -49,11 +48,9 @@ class UdpClient(asyncio.DatagramProtocol):
                 protocol_factory=lambda: self,
                 remote_addr=self.server_address)
         await asyncio.gather(self.stream_mic_input(),
-                             self.decode_audio(),
-                             self.output_audio())
-        # asyncio.create_task(self.stream_mic_input())
-        # asyncio.create_task(self.decode_audio())
-        # asyncio.create_task(self.output_audio())
+                                 self.decode_audio(),
+                                 self.output_audio())
+
 
 
 async def start_client(ip, port, audio_input_device_name='bla', audio_output_device_name='bla'):
