@@ -2,14 +2,30 @@ import asyncio
 from audio_processor import get_all_devices
 from client import UdpClient, start_client
 import tkinter as tk
+import signal
 
 
 class Gui:
+
     def __init__(self):
         self.gui = tk.Tk(screenName='Vojp')
         self.frame = tk.Frame()
         self.ip_address_input = tk.Entry()
         self.port_input = tk.Entry()
+
+        self.input_sample_rate_var = tk.StringVar(name='input_sample_rate', value=48000)
+        self.output_sample_rate_var = tk.StringVar(name='output_sample_rate', value=48000)
+
+        sample_rate_options = ['48000', '32000', '16000', '12000', '8000']
+
+        self.input_sample_rate_select = tk.OptionMenu(self.gui,
+                                                      self.input_sample_rate_var,
+                                                      sample_rate_options[0],
+                                                      *sample_rate_options[1:])
+        self.output_sample_rate_select = tk.OptionMenu(self.gui,
+                                                       self.output_sample_rate_var,
+                                                       sample_rate_options[0],
+                                                       *sample_rate_options[1:])
 
         sound_devices = get_all_devices()
         input_devices = list("")
@@ -52,9 +68,17 @@ class Gui:
         input_device_label.pack()
         self.input_device_select.pack()
 
+        input_sample_rate_label = tk.Label(text='Select Input Sample Rate')
+        input_sample_rate_label.pack()
+        self.input_sample_rate_select.pack()
+
         output_device_label = tk.Label(text='Select Output Device')
         output_device_label.pack()
         self.output_device_select.pack()
+
+        output_sample_rate_label = tk.Label(text='Select Output Sample Rate')
+        output_sample_rate_label.pack()
+        self.output_sample_rate_select.pack()
 
         button = tk.Button(command=self.connect_client, text='Connect', height=2, width=10, fg='green', bg='black',
                            activeforeground='white')
@@ -67,29 +91,28 @@ class Gui:
         port = int(self.port_input.get())
         audio_input_device_name = self.input_device_var.get()
         audio_output_device_name = self.output_device_var.get()
+        input_sample_rate = self.input_sample_rate_var.get()
+        output_sample_rate = self.output_sample_rate_var.get()
 
         print('clicked!')
         print('input: ' + audio_input_device_name)
         print('output: ' + audio_output_device_name)
 
-        asyncio.gather(start_client(ip, port, audio_input_device_name, audio_output_device_name),
-                       self.do_some_thing_gui())
+        asyncio.gather(start_client(ip=ip,
+                                    port=port,
+                                    input_sample_rate=input_sample_rate,
+                                    output_sample_rate=output_sample_rate,
+                                    audio_input_device_name=audio_input_device_name,
+                                    audio_output_device_name=audio_output_device_name),
+                       self.run_gui_async())
 
         self.gui.quit()
 
-    async def do_some_thing_gui(self):
+    async def run_gui_async(self):
         while True:
             try:
                 self.gui.update()
+                await asyncio.sleep(0.1)
             except:
-                loop = asyncio.get_running_loop()
-                tasks = [task for task in asyncio.all_tasks() if task is not asyncio.current_task()]
-                [task.cancel() for task in asyncio.all_tasks()]
-                try:
-                    await asyncio.gather(*tasks)
-                except asyncio.CancelledError:
-                    print('dont care')
-                finally:
-                    loop.stop()
-
-            await asyncio.sleep(0.1)
+                from main import shutdown
+                await shutdown()

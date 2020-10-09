@@ -8,28 +8,36 @@ import numpy as np
 
 class AudioProcessor:
 
-    def __init__(self, sample_rate=48000, audio_per_packet=0.0025, channels=1, audio_input_device_name='default',
+    def __init__(self,
+                 input_sample_rate=48000,
+                 output_sample_rate=48000,
+                 audio_per_packet=0.0025,
+                 channels=1,
+                 audio_input_device_name='default',
                  audio_output_device_name='default'):
         """
         Parameters
         ----------
-        sample_rate: integer, optional; Defaults to 48000
+        :param input_sample_rate: integer, optional; Defaults to 48000
              the audio sample rate in hertz
-        audio_per_packet: float, optional; Defaults to 0.01 which equals 10 milliseconds
+        :param audio_per_packet: float, optional; Defaults to 0.01 which equals 10 milliseconds
             audio fragment length in seconds
-        channels: integer, optional; Defaults to 1
+        :param channels: integer, optional; Defaults to 1
             number of channels, either 1 for mono or 2 for stereo.
+        :param audio_input_device_name: string, optional;  Defaults to system default
+            the selected audio input device name
+        :param audio_output_device_name: string, optional; Defaults to system default
+            the selected audio output device name
         """
-        self.sample_rate = sample_rate
+        self.input_sample_rate = input_sample_rate
+        self.output_sample_rate = output_sample_rate
         self.audio_per_packet = audio_per_packet
         self.channels = channels
-        self.frame_size = int(sample_rate * audio_per_packet * channels)  # Synonymous to block size
+        self.frame_size = int(input_sample_rate * audio_per_packet * channels)  # Synonymous to block size
         print(self.frame_size)
-        self.opus_encoder = opuslib.Encoder(fs=self.sample_rate,
+        self.opus_encoder = opuslib.Encoder(fs=self.input_sample_rate,
                                             channels=self.channels,
                                             application=opuslib.APPLICATION_VOIP)
-        self.opus_decoder = opuslib.Decoder(fs=self.sample_rate,
-                                            channels=self.channels)
         self.output_buffer = queue.Queue()
 
         if audio_input_device_name != 'default':
@@ -47,7 +55,7 @@ class AudioProcessor:
             loop.call_soon_threadsafe(queue_in.put_nowait, (indata.copy(), status))
 
         with sd.InputStream(callback=process_input_stream,
-                            samplerate=self.sample_rate,
+                            samplerate=self.input_sample_rate,
                             channels=self.channels,
                             blocksize=self.frame_size,
                             latency='low',
@@ -61,8 +69,8 @@ class AudioProcessor:
             audio_frame = self.opus_encoder.encode(pcm_data=indata.tobytes(), frame_size=self.frame_size)
             yield audio_frame
 
-    async def convert_opus_to_stream(self, opus_data):
-        return self.opus_decoder.decode(opus_data=opus_data, frame_size=self.frame_size)
+    async def convert_opus_to_stream(self, opus_decoder, opus_data):
+        return opus_decoder.decode(opus_data=opus_data, frame_size=self.frame_size)
 
     async def generate_output_stream(self, audio_stream):
 
@@ -77,7 +85,7 @@ class AudioProcessor:
                 outdata[:] = queue_out.get_nowait()
 
         output_stream = sd.RawOutputStream(callback=proces_output_stream,
-                                           samplerate=self.sample_rate,
+                                           samplerate=self.output_sample_rate,
                                            channels=self.channels,
                                            blocksize=self.frame_size,
                                            latency='low',

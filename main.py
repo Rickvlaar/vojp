@@ -8,7 +8,6 @@ async def main():
     # Show Gui
     gui = Gui()
     gui.start_gui()
-    await gui.do_some_thing_gui()  # Check if the window has not closed, otherwise stop application
 
     # Start Server
     server = AsyncUdpServer()
@@ -22,7 +21,19 @@ async def main():
     #     await server.broadcast_message(input_packet)
     asyncio.get_running_loop().run_forever()
 
-try:
-    asyncio.run(main(), debug=True)
-except asyncio.CancelledError:
-    print('Loop has been stopped successfully')
+
+async def shutdown():
+    loop = asyncio.get_running_loop()
+    tasks = [task for task in asyncio.all_tasks() if task != asyncio.current_task()]
+    [task.cancel() for task in tasks]
+    done, pending = await asyncio.wait(await asyncio.gather(*tasks, return_exceptions=True))
+    loop.stop()
+
+
+if __name__ == '__main__':
+
+    try:
+        asyncio.run(main(), debug=True)
+    except:
+        # asyncio.get_running_loop().create_task(shutdown())
+        print('Loop has been stopped successfully')
