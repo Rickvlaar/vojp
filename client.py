@@ -7,8 +7,8 @@ from audio_processor import AudioProcessor
 
 
 class UdpClient(asyncio.DatagramProtocol):
-    def __init__(self, ip, port, input_sample_rate, output_sample_rate, audio_input_device_name,
-                 audio_output_device_name):
+    def __init__(self, ip, port, input_sample_rate, output_sample_rate, audio_input_device_id,
+                 audio_output_device_id):
         self.loop = asyncio.get_running_loop()
         self.transport = asyncio.BaseTransport()
         self.server_address = (ip, port)
@@ -18,8 +18,8 @@ class UdpClient(asyncio.DatagramProtocol):
         self.input_sample_rate = input_sample_rate
         self.output_sample_rate = output_sample_rate
         self.audio_processor = AudioProcessor(input_sample_rate=self.input_sample_rate,
-                                              audio_input_device_name=audio_input_device_name,
-                                              audio_output_device_name=audio_output_device_name)
+                                              audio_input_device_id=audio_input_device_id,
+                                              audio_output_device_id=audio_output_device_id)
         self.frame_size = self.audio_processor.frame_size
         self.recording = False
         self.recording_file = sf.SoundFile(file='test.wav', mode='w', samplerate=output_sample_rate, channels=1)
@@ -103,9 +103,9 @@ class ListeningClient:
         self.opus_decoder = opuslib.Decoder(fs=sample_rate, channels=1)
 
 
-async def start_client(ip, port, input_sample_rate, output_sample_rate, audio_input_device_name='bla',
-                       audio_output_device_name='bla'):
+async def start_client(ip, port, input_sample_rate, output_sample_rate, audio_input_device_id,
+                       audio_output_device_id):
     print('starting client')
     UdpClient(ip=ip, port=port, input_sample_rate=input_sample_rate, output_sample_rate=output_sample_rate,
-              audio_input_device_name=audio_input_device_name,
-              audio_output_device_name=audio_output_device_name)
+              audio_input_device_id=audio_input_device_id,
+              audio_output_device_id=audio_output_device_id)

@@ -12,8 +12,8 @@ class AudioProcessor:
                  output_sample_rate=48000,
                  audio_per_packet=0.0025,
                  channels=1,
-                 audio_input_device_name='default',
-                 audio_output_device_name='default'):
+                 audio_input_device_id='default',
+                 audio_output_device_id='default'):
         """
         Parameters
         ----------
@@ -23,9 +23,9 @@ class AudioProcessor:
             audio fragment length in seconds
         :param channels: integer, optional; Defaults to 1
             number of channels, either 1 for mono or 2 for stereo.
-        :param audio_input_device_name: string, optional;  Defaults to system default
+        :param audio_input_device_id: string, optional;  Defaults to system default
             the selected audio input device name
-        :param audio_output_device_name: string, optional; Defaults to system default
+        :param audio_output_device_id: string, optional; Defaults to system default
             the selected audio output device name
         """
         self.input_sample_rate = input_sample_rate
@@ -39,11 +39,11 @@ class AudioProcessor:
                                             application=opuslib.APPLICATION_VOIP)
         self.output_buffer = queue.Queue()
 
-        if audio_input_device_name != 'default':
-            sd.default.device[0] = audio_input_device_name
+        if audio_input_device_id != 'default':
+            sd.default.device[0] = int(audio_input_device_id)
             print(sd.default.device)
-        if audio_output_device_name != 'default':
-            sd.default.device[1] = audio_output_device_name
+        if audio_output_device_id != 'default':
+            sd.default.device[1] = int(audio_output_device_id)
             print(sd.default.device)
 
     async def get_mic_input(self):
@@ -108,4 +108,6 @@ def set_default_device():
 
 def get_all_devices():
     sound_devices = sd.query_devices()
+    for index, device in enumerate(sound_devices):
+        device['device_index'] = index
     return sound_devices
