@@ -36,24 +36,29 @@ class UdpClient(asyncio.DatagramProtocol):
         """
 
         # print("Client Received:", data)
-        self.audio_input_buffer.put_nowait(data)
+        udp_object = pickle.loads(data)
+        self.audio_input_buffer.put_nowait((addr, udp_object))
+
+        if addr not in self.logged_in_clients:
+            self.logged_in_clients[addr] = ListeningClient(address=addr,
+                                                           sample_rate=udp_object.sample_rate,
+                                                           frame_size=udp_object.frame_size)
 
     async def decode_audio(self):
         while True:
-            udp_object = pickle.loads(await self.audio_input_buffer.get())
-            encoded_audio_packet = udp_object.audio_packet
-
-            TODO:
-            Add client to the client set and pass its decoder to the method below!!
-
-            decoded_audio_packet = await self.audio_processor.convert_opus_to_stream(opus_decoder=None,
+            client_data_tuple = await self.audio_input_buffer.get()
+            encoded_audio_packet = client_data_tuple[1].audio_packet
+            current_decoder = self.logged_in_clients.get(client_data_tuple[0]).opus_decoder
+            decoded_audio_packet = await self.audio_processor.convert_opus_to_stream(opus_decoder=current_decoder,
                                                                                      opus_data=encoded_audio_packet)
+            # print(decoded_audio_packet)
             self.audio_output_buffer.put_nowait(decoded_audio_packet)
 
     async def output_audio(self):
         print('Starting Output')
         while True:
             async for audio_packet in self.audio_processor.generate_output_stream(self.audio_output_buffer):
+                # print(audio_packet)
                 if self.recording:
                     await self.record_audio_stream(audio_packet)
 
@@ -65,6 +70,7 @@ class UdpClient(asyncio.DatagramProtocol):
             async for input_packet in self.audio_processor.convert_stream_to_opus():
                 self.audio_udp_object.audio_packet = input_packet
                 upd_object = pickle.dumps(self.audio_udp_object)
+                # print(upd_object)
                 self.transport.sendto(upd_object, self.server_address)
 
     async def record_audio_stream(self, audio_packet):
@@ -90,11 +96,11 @@ class AudioUDPObject(object):
 
 class ListeningClient:
 
-    def __init__(self, ip_address, sample_rate, frame_size):
-        self.ip_adress = ip_address
+    def __init__(self, address, sample_rate, frame_size):
+        self.address = address
         self.sample_rate = sample_rate
         self.frame_size = frame_size
-        self.opus_decoder = opuslib.Decoder(fs=frame_size, channels=1)
+        self.opus_decoder = opuslib.Decoder(fs=sample_rate, channels=1)
 
 
 async def start_client(ip, port, input_sample_rate, output_sample_rate, audio_input_device_name='bla',

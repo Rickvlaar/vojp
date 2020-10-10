@@ -19,8 +19,8 @@ class AsyncUdpServer:
         while True:
             received_packet_map = await self.audio_input_buffer.get()
             for listening_client in self.logged_in_clients:
-                print('casting to')
-                print(listening_client)
+                # print('casting to')
+                # print(listening_client)
                 self.transport.sendto(received_packet_map[listening_client], listening_client)
 
                 # if listening_client not in received_packet_map:
@@ -48,5 +48,4 @@ class AsyncUdpServer:
         def datagram_received(self, data, ip_address):
             self.logged_in_clients.add(ip_address)
             received_packet_map = {ip_address: data}
-            print(received_packet_map)
             self.input_buffer.put_nowait(received_packet_map)

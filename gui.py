@@ -13,10 +13,10 @@ class Gui:
         self.ip_address_input = tk.Entry()
         self.port_input = tk.Entry()
 
-        self.input_sample_rate_var = tk.StringVar(name='input_sample_rate', value=48000)
-        self.output_sample_rate_var = tk.StringVar(name='output_sample_rate', value=48000)
+        self.input_sample_rate_var = tk.IntVar(name='input_sample_rate', value=48000)
+        self.output_sample_rate_var = tk.IntVar(name='output_sample_rate', value=48000)
 
-        sample_rate_options = ['48000', '32000', '16000', '12000', '8000']
+        sample_rate_options = [48000, 32000, 16000, 12000, 8000]
 
         self.input_sample_rate_select = tk.OptionMenu(self.gui,
                                                       self.input_sample_rate_var,
