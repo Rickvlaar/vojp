@@ -8,7 +8,8 @@ public_server_address = '0.0.0.0', 5000
 
 class AsyncUdpServer:
 
-    def __init__(self):
+    def __init__(self, echo_mode=False):
+        self.echo_mode = echo_mode
         self.transport = asyncio.BaseTransport()
         self.request_handler = AsyncUdpServer.AsyncUDPRequestHandler()
         self.logged_in_clients = self.request_handler.logged_in_clients
@@ -17,14 +18,15 @@ class AsyncUdpServer:
     async def broadcast_message(self):
         # Filter out packets from client sending the packet
         while True:
-            received_packet_map = await self.audio_input_buffer.get()
+            received_packet_tuple = await self.audio_input_buffer.get()
+
             for listening_client in self.logged_in_clients:
                 # print('casting to')
                 # print(listening_client)
-                self.transport.sendto(received_packet_map[listening_client], listening_client)
-
-                # if listening_client not in received_packet_map:
-                #     self.transport.sendto(received_packet_map[listening_client], listening_client)
+                data = received_packet_tuple[0]
+                sender = received_packet_tuple[1]
+                if listening_client != sender or self.echo_mode:
+                    self.transport.sendto(data, listening_client)
 
     async def start_server(self):
         print('server starting')
@@ -47,5 +49,5 @@ class AsyncUdpServer:
 
         def datagram_received(self, data, ip_address):
             self.logged_in_clients.add(ip_address)
-            received_packet_map = {ip_address: data}
-            self.input_buffer.put_nowait(received_packet_map)
+            received_packet_tuple = (data, ip_address)
+            self.input_buffer.put_nowait(received_packet_tuple)

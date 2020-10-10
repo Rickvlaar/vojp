@@ -10,7 +10,7 @@ async def main():
     gui.start_gui()
 
     # Start Server
-    server = AsyncUdpServer()
+    server = AsyncUdpServer(echo_mode=True)
     await asyncio.create_task(server.start_server())
 
 
