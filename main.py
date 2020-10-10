@@ -1,5 +1,4 @@
 import asyncio
-from server import AsyncUdpServer
 from gui import Gui
 
 
@@ -9,17 +8,8 @@ async def main():
     gui = Gui()
     gui.start_gui()
 
-    # Start Server
-    server = AsyncUdpServer(echo_mode=True)
-    await asyncio.create_task(server.start_server())
-
-
-    # audio_processor = AudioProcessor()
-    # Create audio processor and start streaming
-    # mic_input_stream = audio_processor.convert_stream_to_opus()
-    # async for input_packet in mic_input_stream:
-    #     await server.broadcast_message(input_packet)
-    asyncio.get_running_loop().run_forever()
+    while True:
+        await asyncio.sleep(50000)
 
 
 async def shutdown():
@@ -33,7 +23,7 @@ async def shutdown():
 if __name__ == '__main__':
 
     try:
-        asyncio.run(main(), debug=True)
+        asyncio.run(main(), debug=False)
     except:
         # asyncio.get_running_loop().create_task(shutdown())
         print('Loop has been stopped successfully')

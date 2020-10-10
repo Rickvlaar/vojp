@@ -1,6 +1,7 @@
 import asyncio
 from audio_processor import get_all_devices
-from client import UdpClient, start_client
+from client import start_client
+from server import AsyncUdpServer
 import tkinter as tk
 
 
@@ -49,6 +50,11 @@ class Gui:
                                         width=10, fg='black',
                                         activeforeground='white')
 
+        self.start_server_var = tk.BooleanVar(master=self.frame, value=False)
+        self.start_server_checkbox = tk.Checkbutton(master=self.frame, text='start server', variable=self.start_server_var)
+        self.echo_mode_var = tk.BooleanVar(master=self.frame, value=False)
+        self.echo_mode_checkbox = tk.Checkbutton(master=self.frame, text='echo mode', variable=self.echo_mode_var)
+
     def start_gui(self):
         self.frame.pack()
 
@@ -82,6 +88,8 @@ class Gui:
         self.output_sample_rate_select.pack()
 
         self.connect_button.pack()
+        self.start_server_checkbox.pack()
+        self.echo_mode_checkbox.pack()
 
         self.gui.mainloop()
 
@@ -92,10 +100,17 @@ class Gui:
         audio_output_device_id = self.output_device_var.get()[0]
         input_sample_rate = self.input_sample_rate_var.get()
         output_sample_rate = self.output_sample_rate_var.get()
+        start_server = self.start_server_var.get()
+        echo_mode = self.echo_mode_var.get()
 
         print('clicked!')
         print('input: ' + audio_input_device_id)
         print('output: ' + audio_output_device_id)
+
+        # Start Server
+        if start_server:
+            server = AsyncUdpServer(echo_mode=echo_mode)
+            asyncio.create_task(server.start_server())
 
         asyncio.gather(start_client(ip=ip,
                                     port=port,
