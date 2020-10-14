@@ -61,8 +61,8 @@ class AudioProcessor:
                             dtype='int16'):
             while True:
                 indata, status = await queue_in.get()
-                print(time.monotonic())
-                print('in ' + str(self.input_buffer.qsize()))
+                # print(time.monotonic())
+                # print('in ' + str(self.input_buffer.qsize()))
                 yield indata, status
 
     async def convert_stream_to_opus(self):
@@ -85,13 +85,13 @@ class AudioProcessor:
         audio_packet_list = [buffer]
 
         def process_output_stream(outdata, frame_count, time_info, status):
-            print(time.monotonic())
+            # print(time.monotonic())
             if len(audio_packet_list) > 0:
                 outdata[:] = audio_packet_list.pop(0)
             else:
                 outdata[:] = buffer
-            print(time.monotonic())
-            print('output done')
+            # print(time.monotonic())
+            # print('output done')
 
         output_stream = sd.RawOutputStream(callback=process_output_stream,
                                            samplerate=self.output_sample_rate,
