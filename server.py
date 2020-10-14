@@ -33,8 +33,8 @@ class AsyncUdpServer:
         loop = asyncio.get_running_loop()
 
         self.transport, self.protocol = await loop.create_datagram_endpoint(
-                protocol_factory=lambda: self.request_handler,
-                local_addr=public_server_address)
+            protocol_factory=lambda: self.request_handler,
+            local_addr=public_server_address)
         await self.broadcast_message()
 
     class AsyncUDPRequestHandler(asyncio.DatagramProtocol):

@@ -1,6 +1,7 @@
 import queue
 import asyncio
 import opuslib
+import time
 import sounddevice as sd
 import numpy as np
 
@@ -10,7 +11,7 @@ class AudioProcessor:
     def __init__(self,
                  input_sample_rate=48000,
                  output_sample_rate=48000,
-                 audio_per_packet=0.0025,
+                 audio_per_packet=0.01,
                  channels=1,
                  audio_input_device_id='default',
                  audio_output_device_id='default'):
@@ -33,22 +34,21 @@ class AudioProcessor:
         self.audio_per_packet = audio_per_packet
         self.channels = channels
         self.frame_size = int(input_sample_rate * audio_per_packet * channels)  # Synonymous to block size
-        print(self.frame_size)
         self.opus_encoder = opuslib.Encoder(fs=self.input_sample_rate,
                                             channels=self.channels,
                                             application=opuslib.APPLICATION_VOIP)
+        self.input_buffer = queue.Queue()
         self.output_buffer = queue.Queue()
+
 
         if audio_input_device_id != 'default':
             sd.default.device[0] = int(audio_input_device_id)
-            print(sd.default.device)
         if audio_output_device_id != 'default':
             sd.default.device[1] = int(audio_output_device_id)
-            print(sd.default.device)
 
     async def get_mic_input(self):
         queue_in = asyncio.Queue()
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
 
         def process_input_stream(indata, frame_count, time_info, status):
             loop.call_soon_threadsafe(queue_in.put_nowait, (indata.copy(), status))
@@ -61,10 +61,13 @@ class AudioProcessor:
                             dtype='int16'):
             while True:
                 indata, status = await queue_in.get()
+                print(time.monotonic())
+                print('in ' + str(self.input_buffer.qsize()))
                 yield indata, status
 
     async def convert_stream_to_opus(self):
         async for indata, status in self.get_mic_input():
+            # print('converting')
             audio_frame = self.opus_encoder.encode(pcm_data=indata.tobytes(), frame_size=self.frame_size)
             yield audio_frame
 
@@ -76,14 +79,21 @@ class AudioProcessor:
         queue_out = queue.Queue()
 
         # Create buffer for starting the audio stream. Prevents beeping sound
-        buffer = b'\x00' * self.frame_size * 2
+        buffer = bytes(self.frame_size * 2)
         queue_out.put_nowait(buffer)
 
-        def proces_output_stream(outdata, frame_count, time_info, status):
-            if queue_out.qsize() != 0:
-                outdata[:] = queue_out.get_nowait()
+        audio_packet_list = [buffer]
 
-        output_stream = sd.RawOutputStream(callback=proces_output_stream,
+        def process_output_stream(outdata, frame_count, time_info, status):
+            print(time.monotonic())
+            if len(audio_packet_list) > 0:
+                outdata[:] = audio_packet_list.pop(0)
+            else:
+                outdata[:] = buffer
+            print(time.monotonic())
+            print('output done')
+
+        output_stream = sd.RawOutputStream(callback=process_output_stream,
                                            samplerate=self.output_sample_rate,
                                            channels=self.channels,
                                            blocksize=self.frame_size,
@@ -92,14 +102,16 @@ class AudioProcessor:
 
         with output_stream:
             while True:
+                # print(time.monotonic())
+                # print('out 1 - ' + str(len(audio_packet_list)))
                 audio_packet = await audio_stream.get()
-                queue_out.put_nowait(audio_packet)
-                yield audio_packet
+                audio_packet_list.append(audio_packet)
+                # print(time.monotonic())
+                # print('out 2 - ' + str(len(audio_packet_list)))
 
 
 def set_default_device():
     sound_devices = sd.query_devices()
-    print(sd.default.device)
     for device in sound_devices:
         if device.get('max_input_channels') > 0:
             sd.default.device = device.get('name')

@@ -1,8 +1,9 @@
 import asyncio
 from gui import Gui
-
+import logging
 
 async def main():
+    logging.basicConfig(level=logging.DEBUG)
 
     # Show Gui
     gui = Gui()
@@ -23,7 +24,7 @@ async def shutdown():
 if __name__ == '__main__':
 
     try:
-        asyncio.run(main(), debug=False)
+        asyncio.run(main(), debug=True)
     except:
         # asyncio.get_running_loop().create_task(shutdown())
         print('Loop has been stopped successfully')

@@ -132,7 +132,7 @@ class Gui:
         while True:
             try:
                 self.gui.update()
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0.01)
             except:
                 from main import shutdown
                 await shutdown()
