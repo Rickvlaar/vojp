@@ -104,12 +104,13 @@ class UdpClient(asyncio.DatagramProtocol):
             if len(self.logged_in_clients) > 0:
                 combined_fragment = bytes(self.frame_size * 2)
                 for client in self.logged_in_clients.values():
-                    fragment = await client.decoded_audio_packet_queue.get()
-                    combined_fragment = audioop.add(combined_fragment, fragment, 2)
-                    # print('synced')
-                    # print(combined_fragment)
-                self.audio_output_buffer.put_nowait(combined_fragment)
-                yield combined_fragment
+                    if len(client.decoded_audio_packet_queue) > 0:
+                        fragment = client.decoded_audio_packet_queue.pop(0)
+                        combined_fragment = audioop.add(combined_fragment, fragment, 2)
+                        # print('synced')
+                        # print(combined_fragment)
+                        self.audio_output_buffer.put_nowait(combined_fragment)
+                    yield combined_fragment
             await self.new_client_event.wait()  # release the loop while waiting for clients
 
     async def output_audio(self):
@@ -144,7 +145,7 @@ class ListeningClient:
         self.frame_size = frame_size
         self.parent_frame_size = parent_frame_size
         self.encoded_audio_packet_queue = asyncio.Queue()
-        self.decoded_audio_packet_queue = asyncio.Queue()
+        self.decoded_audio_packet_queue = list()
         self.opus_decoder = opuslib.Decoder(fs=sample_rate, channels=1)
 
     async def decode_audio(self):
@@ -158,7 +159,7 @@ class ListeningClient:
                 split_factor = self.frame_size % self.parent_frame_size
                 decoded_audio_packet = decoded_audio_packet.split(maxsplit=split_factor)
 
-            self.decoded_audio_packet_queue.put_nowait(decoded_audio_packet)
+            self.decoded_audio_packet_queue.append(decoded_audio_packet)
             # print(time.monotonic())
             # print('decoding finished')
 
