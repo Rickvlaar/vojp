@@ -2,6 +2,7 @@ import asyncio
 from gui import Gui
 import logging
 
+
 async def main():
     # logging.basicConfig(level=logging.DEBUG)
 

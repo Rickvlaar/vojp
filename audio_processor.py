@@ -60,10 +60,12 @@ class AudioProcessor:
                             latency='low',
                             dtype='int16'):
             while True:
+                # input_time_start = time.monotonic()
                 indata, status = await queue_in.get()
-                # print(time.monotonic())
-                # print('in ' + str(self.input_buffer.qsize()))
                 yield indata, status
+                # input_time_end = time.monotonic()
+                # delta_time = input_time_end - input_time_start
+                # print('audio input time = ' + str(delta_time))
 
     async def convert_stream_to_opus(self):
         async for indata, status in self.get_mic_input():
@@ -102,12 +104,15 @@ class AudioProcessor:
 
         with output_stream:
             while True:
-                # print(time.monotonic())
-                # print('out 1 - ' + str(len(audio_packet_list)))
+                # input_time_start = time.monotonic()
+
                 audio_packet = await audio_stream.get()
                 audio_packet_list.append(audio_packet)
-                # print(time.monotonic())
-                # print('out 2 - ' + str(len(audio_packet_list)))
+
+                # input_time_end = time.monotonic()
+                # delta_time = input_time_end - input_time_start
+                # print('output time = ' + str(delta_time))
+
 
 
 def set_default_device():

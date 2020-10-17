@@ -14,12 +14,14 @@ class AsyncUdpServer:
         self.request_handler = AsyncUdpServer.AsyncUDPRequestHandler()
         self.logged_in_clients = self.request_handler.logged_in_clients
         self.audio_input_buffer = self.request_handler.input_buffer
+        self.sent = 0
+        self.received = 0
 
     async def broadcast_message(self):
         # Filter out packets from client sending the packet
         while True:
             received_packet_tuple = await self.audio_input_buffer.get()
-
+            self.received += 1
             for listening_client in self.logged_in_clients:
                 # print('casting to')
                 # print(listening_client)
@@ -27,6 +29,7 @@ class AsyncUdpServer:
                 sender = received_packet_tuple[1]
                 if listening_client != sender or self.echo_mode:
                     self.transport.sendto(data, listening_client)
+                    self.sent += 1
 
     async def start_server(self):
         print('server starting')
