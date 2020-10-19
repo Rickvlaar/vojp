@@ -27,8 +27,11 @@ class UdpClient(asyncio.DatagramProtocol):
         self.frame_size = self.audio_processor.frame_size
         self.recording = False
         self.recording_file = sf.SoundFile(file='test.wav', mode='w', samplerate=output_sample_rate, channels=1)
-        self.audio_udp_object = AudioUDPObject(sample_rate=self.input_sample_rate, frame_size=self.frame_size)
+        self.audio_udp_object = AudioUDPObject(sample_rate=self.input_sample_rate,
+                                               frame_size=self.frame_size,
+                                               sent_at=time.time_ns())
         self.new_client_event = asyncio.Event()
+        self.latency = 0
         self.sent = 0
         self.received = 0
 
@@ -49,8 +52,8 @@ class UdpClient(asyncio.DatagramProtocol):
         :param addr: IP address and port of sender
         """
 
-        # print("Client Received:", data)
         udp_object = pickle.loads(data)
+        self.latency = (time.time_ns() - udp_object.sent_at) / 1000000
         self.audio_input_buffer.put_nowait((addr, udp_object))
         self.received += 1
         if addr not in self.logged_in_clients:
@@ -76,6 +79,7 @@ class UdpClient(asyncio.DatagramProtocol):
                 # input_time_start = time.monotonic()
                 # print('streaming')
                 self.audio_udp_object.audio_packet = input_packet
+                self.audio_udp_object.sent_at = time.time_ns()
                 upd_object = pickle.dumps(self.audio_udp_object)
                 # print(upd_object)
                 self.sent += 1
@@ -85,45 +89,29 @@ class UdpClient(asyncio.DatagramProtocol):
                 # delta_time = input_time_end - input_time_start
                 # print('streaming time = ' + str(delta_time))
 
-    async def decode_audio(self):
-        while True:
-            input_time_start = time.monotonic()
-            # print('decoding')
-
-            client_data_tuple = await self.audio_input_buffer.get()
-            encoded_audio_packet = client_data_tuple[1].audio_packet
-            current_decoder = self.logged_in_clients.get(client_data_tuple[0]).opus_decoder
-            decoded_audio_packet = await self.audio_processor.convert_opus_to_stream(opus_decoder=current_decoder,
-                                                                                     opus_data=encoded_audio_packet)
-            # print(decoded_audio_packet)
-            self.audio_output_buffer.put_nowait(decoded_audio_packet)
-            input_time_end = time.monotonic()
-            delta_time = input_time_end - input_time_start
-            print('decoding time = ' + str(delta_time))
-
     async def sync_streams(self):
         await self.new_client_event.wait()  # release the loop while waiting for clients
         wait_time = 0.005
         while True:
             # input_time_start = time.monotonic()
             await asyncio.sleep(wait_time)  # reduce cpu usage and free up thread
-            # print('Now syncing this number of clients: ' + str(len(self.logged_in_clients)))
-            combined_fragment = bytes(self.frame_size * 2)
+            combined_fragment = None
             for client in self.logged_in_clients.values():
-                if len(client.decoded_audio_packet_queue) > 0 and self.audio_output_buffer.qsize() < 2:  # Allow buffer to empty to prevent packages piling
+                if len(client.decoded_audio_packet_queue) > 0:
                     fragment = client.decoded_audio_packet_queue.pop(0)
+                    if combined_fragment is None:
+                        combined_fragment = fragment
                     combined_fragment = audioop.add(combined_fragment, fragment, 2)
-                    # self.audio_output_buffer.put_nowait(combined_fragment)
-                    await self.audio_output_buffer.put(combined_fragment)
-            if self.recording:
-                await self.record_audio_stream(combined_fragment)
+            if combined_fragment:
+                self.audio_output_buffer.put_nowait(combined_fragment)
+            # if self.recording:
+            #     await self.record_audio_stream(combined_fragment)
             # input_time_end = time.monotonic()
             # delta_time = input_time_end - input_time_start
             # print('sync time = ' + str(delta_time))
 
     async def output_audio(self):
         print('Starting Output')
-        print(time.monotonic())
         asyncio.create_task(self.sync_streams())
         asyncio.create_task(self.audio_processor.generate_output_stream(self.audio_output_buffer))
 
@@ -133,9 +121,10 @@ class UdpClient(asyncio.DatagramProtocol):
 
 class AudioUDPObject(object):
 
-    def __init__(self, sample_rate, frame_size, audio_packet=b''):
+    def __init__(self, sample_rate, frame_size, sent_at, audio_packet=b''):
         self.sample_rate = sample_rate
         self.frame_size = frame_size
+        self.sent_at = sent_at
         self.audio_packet = audio_packet
 
 
@@ -152,8 +141,7 @@ class ListeningClient:
 
     async def decode_audio(self):
         while True:
-            # print(time.monotonic())
-            # print('decoding')
+            # input_time_start = time.monotonic()            # print('decoding')
             encoded_audio_packet = await self.encoded_audio_packet_queue.get()
             decoded_audio_packet = self.opus_decoder.decode(opus_data=encoded_audio_packet, frame_size=self.frame_size)
             if self.frame_size > self.parent_frame_size:
@@ -161,16 +149,7 @@ class ListeningClient:
                 decoded_audio_packet = decoded_audio_packet.split(maxsplit=split_factor)
 
             self.decoded_audio_packet_queue.append(decoded_audio_packet)
-            # print(time.monotonic())
-            # print('decoding finished')
-
-
-async def start_client(ip, port, input_sample_rate, output_sample_rate, audio_input_device_id,
-                       audio_output_device_id):
-    client = UdpClient(ip=ip,
-                       port=port,
-                       input_sample_rate=input_sample_rate,
-                       output_sample_rate=output_sample_rate,
-                       audio_input_device_id=audio_input_device_id,
-                       audio_output_device_id=audio_output_device_id)
-    await client.start_client()
+            # input_time_end = time.monotonic()
+            # delta_time = (input_time_end - input_time_start) * 1000
+            # delta_time = round(delta_time, 1)
+            # print('Decoding time = ' + str(delta_time) + ' ms')

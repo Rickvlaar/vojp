@@ -1,6 +1,6 @@
 import asyncio
 from audio_processor import get_all_devices
-from client import start_client
+from client import UdpClient
 from server import AsyncUdpServer
 import tkinter as tk
 
@@ -107,17 +107,19 @@ class Gui:
         print('input: ' + audio_input_device_id)
         print('output: ' + audio_output_device_id)
 
-        # Start Server
+        client = UdpClient(ip=ip,
+                           port=port,
+                           input_sample_rate=input_sample_rate,
+                           output_sample_rate=output_sample_rate,
+                           audio_input_device_id=audio_input_device_id,
+                           audio_output_device_id=audio_output_device_id)
+
+        # Start Server if asked
         if start_server:
             server = AsyncUdpServer(echo_mode=echo_mode)
             asyncio.create_task(server.start_server())
 
-        asyncio.gather(start_client(ip=ip,
-                                    port=port,
-                                    input_sample_rate=input_sample_rate,
-                                    output_sample_rate=output_sample_rate,
-                                    audio_input_device_id=audio_input_device_id,
-                                    audio_output_device_id=audio_output_device_id),
+        asyncio.gather(client.start_client(),
                        self.run_gui_async())
 
         self.gui.quit()

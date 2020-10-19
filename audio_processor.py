@@ -1,7 +1,10 @@
 import queue
 import asyncio
 import opuslib
+import opuslib.api.encoder
+import opuslib.api.ctl
 import time
+import audioop
 import sounddevice as sd
 import numpy as np
 
@@ -37,9 +40,12 @@ class AudioProcessor:
         self.opus_encoder = opuslib.Encoder(fs=self.input_sample_rate,
                                             channels=self.channels,
                                             application=opuslib.APPLICATION_VOIP)
+        # opuslib.api.encoder.encoder_ctl(self.opus_encoder.encoder_state, opuslib.api.ctl.set_inband_fec, 1)
+        # opuslib.api.encoder.encoder_ctl(self.opus_encoder.encoder_state, opuslib.api.ctl.set_packet_loss_perc, 30)
+
         self.input_buffer = queue.Queue()
         self.output_buffer = queue.Queue()
-
+        self.max_buffer_size = 0.05 / audio_per_packet  # allow a buffer size of 50ms
 
         if audio_input_device_id != 'default':
             sd.default.device[0] = int(audio_input_device_id)
@@ -69,7 +75,6 @@ class AudioProcessor:
 
     async def convert_stream_to_opus(self):
         async for indata, status in self.get_mic_input():
-            # print('converting')
             audio_frame = self.opus_encoder.encode(pcm_data=indata.tobytes(), frame_size=self.frame_size)
             yield audio_frame
 
@@ -78,22 +83,16 @@ class AudioProcessor:
 
     async def generate_output_stream(self, audio_stream):
 
-        queue_out = queue.Queue()
-
         # Create buffer for starting the audio stream. Prevents beeping sound
-        buffer = bytes(self.frame_size * 2)
-        queue_out.put_nowait(buffer)
-
-        audio_packet_list = [buffer]
+        packet_of_silence = bytes(self.frame_size * 2)
+        buffer = [packet_of_silence]
 
         def process_output_stream(outdata, frame_count, time_info, status):
-            # print(time.monotonic())
-            if len(audio_packet_list) > 0:
-                outdata[:] = audio_packet_list.pop(0)
+            # If the buffer is empty, play silence
+            if len(buffer) > 0:
+                outdata[:] = buffer.pop(0)
             else:
-                outdata[:] = buffer
-            # print(time.monotonic())
-            # print('output done')
+                outdata[:] = packet_of_silence
 
         output_stream = sd.RawOutputStream(callback=process_output_stream,
                                            samplerate=self.output_sample_rate,
@@ -102,17 +101,28 @@ class AudioProcessor:
                                            latency='low',
                                            dtype='int16')
 
+        overruns = 0
         with output_stream:
             while True:
                 # input_time_start = time.monotonic()
 
                 audio_packet = await audio_stream.get()
-                audio_packet_list.append(audio_packet)
+                buffer.append(audio_packet)
+                print(len(buffer))
+                # larray = np.ndarray((480, 1), dtype='int16', buffer=audio_packet)
+                if len(buffer) > 3:
+                    print('buffer overflow - speeding up')
+                    fragment_1 = buffer.pop(2)
+                    nulls = bytes(1)
+                    fragment = buffer[1][:-120]
+                    fragment = fragment.rjust(960, nulls)
+                    buffer[1] = fragment
+                    overruns += 1
+                    print(overruns)
 
                 # input_time_end = time.monotonic()
                 # delta_time = input_time_end - input_time_start
                 # print('output time = ' + str(delta_time))
-
 
 
 def set_default_device():
