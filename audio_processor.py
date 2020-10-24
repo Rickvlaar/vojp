@@ -14,7 +14,7 @@ class AudioProcessor:
     def __init__(self,
                  input_sample_rate=48000,
                  output_sample_rate=48000,
-                 audio_per_packet=0.01,
+                 packet_length=0.01,
                  channels=1,
                  audio_input_device_id='default',
                  audio_output_device_id='default'):
@@ -23,7 +23,7 @@ class AudioProcessor:
         ----------
         :param input_sample_rate: integer, optional; Defaults to 48000
              the audio sample rate in hertz
-        :param audio_per_packet: float, optional; Defaults to 0.01 which equals 10 milliseconds
+        :param packet_length: float, optional; Defaults to 0.01 which equals 10 milliseconds
             audio fragment length in seconds
         :param channels: integer, optional; Defaults to 1
             number of channels, either 1 for mono or 2 for stereo.
@@ -34,9 +34,9 @@ class AudioProcessor:
         """
         self.input_sample_rate = input_sample_rate
         self.output_sample_rate = output_sample_rate
-        self.audio_per_packet = audio_per_packet
+        self.packet_length = packet_length
         self.channels = channels
-        self.frame_size = int(input_sample_rate * audio_per_packet * channels)  # Synonymous to block size
+        self.frame_size = int(input_sample_rate * packet_length * channels)  # Synonymous to block size
         self.opus_encoder = opuslib.Encoder(fs=self.input_sample_rate,
                                             channels=self.channels,
                                             application=opuslib.APPLICATION_VOIP)
@@ -45,7 +45,7 @@ class AudioProcessor:
 
         self.input_buffer = queue.Queue()
         self.output_buffer = queue.Queue()
-        self.max_buffer_size = 0.05 / audio_per_packet  # allow a buffer size of 50ms
+        self.max_buffer_size = 0.05 / packet_length  # allow a buffer size of 50ms
 
         if audio_input_device_id != 'default':
             sd.default.device[0] = int(audio_input_device_id)
@@ -108,17 +108,6 @@ class AudioProcessor:
 
                 audio_packet = await audio_stream.get()
                 buffer.append(audio_packet)
-                print(len(buffer))
-                # larray = np.ndarray((480, 1), dtype='int16', buffer=audio_packet)
-                if len(buffer) > 3:
-                    print('buffer overflow - speeding up')
-                    fragment_1 = buffer.pop(2)
-                    nulls = bytes(1)
-                    fragment = buffer[1][:-120]
-                    fragment = fragment.rjust(960, nulls)
-                    buffer[1] = fragment
-                    overruns += 1
-                    print(overruns)
 
                 # input_time_end = time.monotonic()
                 # delta_time = input_time_end - input_time_start

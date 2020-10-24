@@ -12,19 +12,22 @@ class UdpClient(asyncio.DatagramProtocol):
     started_at = time.monotonic()
 
     def __init__(self, ip, port, input_sample_rate, output_sample_rate, audio_input_device_id,
-                 audio_output_device_id):
+                 audio_output_device_id, packet_length=0.01):
         self.loop = asyncio.get_running_loop()
         self.transport = asyncio.BaseTransport()
         self.server_address = (ip, port)
         self.logged_in_clients = dict()
         self.audio_input_buffer = asyncio.Queue()
         self.audio_output_buffer = asyncio.Queue()
+        self.packet_length = packet_length
         self.input_sample_rate = input_sample_rate
         self.output_sample_rate = output_sample_rate
         self.audio_processor = AudioProcessor(input_sample_rate=self.input_sample_rate,
+                                              packet_length=self.packet_length,
                                               audio_input_device_id=audio_input_device_id,
                                               audio_output_device_id=audio_output_device_id)
         self.frame_size = self.audio_processor.frame_size
+        self.max_buffer_size = 1
         self.recording = False
         self.recording_file = sf.SoundFile(file='test.wav', mode='w', samplerate=output_sample_rate, channels=1)
         self.audio_udp_object = AudioUDPObject(sample_rate=self.input_sample_rate,
@@ -91,19 +94,20 @@ class UdpClient(asyncio.DatagramProtocol):
 
     async def sync_streams(self):
         await self.new_client_event.wait()  # release the loop while waiting for clients
-        wait_time = 0.005
+        wait_time = self.packet_length * 0.8
         while True:
             # input_time_start = time.monotonic()
             await asyncio.sleep(wait_time)  # reduce cpu usage and free up thread
-            combined_fragment = None
-            for client in self.logged_in_clients.values():
-                if len(client.decoded_audio_packet_queue) > 0:
-                    fragment = client.decoded_audio_packet_queue.pop(0)
-                    if combined_fragment is None:
-                        combined_fragment = fragment
-                    combined_fragment = audioop.add(combined_fragment, fragment, 2)
-            if combined_fragment:
-                self.audio_output_buffer.put_nowait(combined_fragment)
+            if self.audio_output_buffer.qsize() < self.max_buffer_size:
+                combined_fragment = None
+                for client in self.logged_in_clients.values():
+                    if len(client.decoded_audio_packet_queue) > 0:
+                        fragment = client.decoded_audio_packet_queue.pop(0)
+                        if combined_fragment is None:
+                            combined_fragment = fragment
+                        combined_fragment = audioop.add(combined_fragment, fragment, 2)
+                if combined_fragment:
+                    self.audio_output_buffer.put_nowait(combined_fragment)
             # if self.recording:
             #     await self.record_audio_stream(combined_fragment)
             # input_time_end = time.monotonic()
