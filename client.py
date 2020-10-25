@@ -56,7 +56,8 @@ class UdpClient(asyncio.DatagramProtocol):
         """
 
         udp_object = pickle.loads(data)
-        self.latency = (time.time_ns() - udp_object.sent_at) / 1000000
+        latency = (time.time_ns() - udp_object.sent_at) / 1000000
+        self.latency = round(latency, 1)
         self.audio_input_buffer.put_nowait((addr, udp_object))
         self.received += 1
         if addr not in self.logged_in_clients:
@@ -98,7 +99,7 @@ class UdpClient(asyncio.DatagramProtocol):
         while True:
             # input_time_start = time.monotonic()
             await asyncio.sleep(wait_time)  # reduce cpu usage and free up thread
-            if self.audio_output_buffer.qsize() < self.max_buffer_size:
+            if self.audio_processor.get_buffer_size() < self.max_buffer_size:
                 combined_fragment = None
                 for client in self.logged_in_clients.values():
                     if len(client.decoded_audio_packet_queue) > 0:

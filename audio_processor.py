@@ -44,7 +44,7 @@ class AudioProcessor:
         # opuslib.api.encoder.encoder_ctl(self.opus_encoder.encoder_state, opuslib.api.ctl.set_packet_loss_perc, 30)
 
         self.input_buffer = queue.Queue()
-        self.output_buffer = queue.Queue()
+        self.output_buffer = list()
         self.max_buffer_size = 0.05 / packet_length  # allow a buffer size of 50ms
 
         if audio_input_device_id != 'default':
@@ -85,12 +85,12 @@ class AudioProcessor:
 
         # Create buffer for starting the audio stream. Prevents beeping sound
         packet_of_silence = bytes(self.frame_size * 2)
-        buffer = [packet_of_silence]
+        self.output_buffer = [packet_of_silence]
 
         def process_output_stream(outdata, frame_count, time_info, status):
             # If the buffer is empty, play silence
-            if len(buffer) > 0:
-                outdata[:] = buffer.pop(0)
+            if len(self.output_buffer) > 0:
+                outdata[:] = self.output_buffer.pop(0)
             else:
                 outdata[:] = packet_of_silence
 
@@ -101,17 +101,17 @@ class AudioProcessor:
                                            latency='low',
                                            dtype='int16')
 
-        overruns = 0
         with output_stream:
             while True:
                 # input_time_start = time.monotonic()
 
                 audio_packet = await audio_stream.get()
-                buffer.append(audio_packet)
-
+                self.output_buffer.append(audio_packet)
                 # input_time_end = time.monotonic()
                 # delta_time = input_time_end - input_time_start
                 # print('output time = ' + str(delta_time))
+    def get_buffer_size(self):
+        return len(self.output_buffer)
 
 
 def set_default_device():
