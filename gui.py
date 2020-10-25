@@ -68,6 +68,10 @@ class Gui:
         self.echo_mode_checkbox = ttk.Checkbutton(master=self.right_frame, text='echo mode',
                                                   variable=self.echo_mode_var)
 
+        self.record_var = tk.BooleanVar(master=self.right_frame, value=False)
+        self.record_checkbox = ttk.Checkbutton(master=self.right_frame, text='record',
+                                               variable=self.record_var)
+
         self.latency_var = tk.StringVar(master=self.right_frame, value=0)
 
     def start_gui(self):
@@ -116,6 +120,7 @@ class Gui:
         self.connect_button.pack()
         self.start_server_checkbox.pack()
         self.echo_mode_checkbox.pack()
+        self.record_checkbox.pack()
 
         latency_label = ttk.Label(master=self.right_frame, text='Latency (ms)')
         latency_label.pack()
@@ -133,6 +138,7 @@ class Gui:
         output_sample_rate = self.output_sample_rate_var.get()
         start_server = self.start_server_var.get()
         echo_mode = self.echo_mode_var.get()
+        record_audio = self.record_var.get()
 
         print('clicked!')
         print('input: ' + audio_input_device_id)
@@ -143,7 +149,8 @@ class Gui:
                                 input_sample_rate=input_sample_rate,
                                 output_sample_rate=output_sample_rate,
                                 audio_input_device_id=audio_input_device_id,
-                                audio_output_device_id=audio_output_device_id)
+                                audio_output_device_id=audio_output_device_id,
+                                record_audio=record_audio)
 
         # Start Server if asked
         if start_server:

@@ -5,6 +5,7 @@ import time
 import audioop
 import opuslib
 import soundfile as sf
+from datetime import datetime
 from audio_processor import AudioProcessor
 
 
@@ -12,7 +13,7 @@ class UdpClient(asyncio.DatagramProtocol):
     started_at = time.monotonic()
 
     def __init__(self, ip, port, input_sample_rate, output_sample_rate, audio_input_device_id,
-                 audio_output_device_id, packet_length=0.01):
+                 audio_output_device_id, packet_length=0.01, record_audio=False):
         self.loop = asyncio.get_running_loop()
         self.transport = asyncio.BaseTransport()
         self.server_address = (ip, port)
@@ -28,8 +29,11 @@ class UdpClient(asyncio.DatagramProtocol):
                                               audio_output_device_id=audio_output_device_id)
         self.frame_size = self.audio_processor.frame_size
         self.max_buffer_size = 1
-        self.recording = False
-        self.recording_file = sf.SoundFile(file='test.wav', mode='w', samplerate=output_sample_rate, channels=1)
+        self.record_audio = record_audio
+        self.recording_file = sf.SoundFile(file='recordings/recording_' + str(datetime.now()) + '.wav',
+                                           mode='w',
+                                           samplerate=output_sample_rate,
+                                           channels=1)
         self.audio_udp_object = AudioUDPObject(sample_rate=self.input_sample_rate,
                                                frame_size=self.frame_size,
                                                sent_at=time.time_ns())
@@ -85,7 +89,6 @@ class UdpClient(asyncio.DatagramProtocol):
                 self.audio_udp_object.audio_packet = input_packet
                 self.audio_udp_object.sent_at = time.time_ns()
                 upd_object = pickle.dumps(self.audio_udp_object)
-                # print(upd_object)
                 self.sent += 1
                 self.transport.sendto(upd_object, self.server_address)
 
@@ -109,8 +112,9 @@ class UdpClient(asyncio.DatagramProtocol):
                         combined_fragment = audioop.add(combined_fragment, fragment, 2)
                 if combined_fragment:
                     self.audio_output_buffer.put_nowait(combined_fragment)
-            # if self.recording:
-            #     await self.record_audio_stream(combined_fragment)
+                    if self.record_audio:
+                        await self.record_audio_stream(combined_fragment)
+
             # input_time_end = time.monotonic()
             # delta_time = input_time_end - input_time_start
             # print('sync time = ' + str(delta_time))

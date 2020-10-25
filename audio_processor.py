@@ -104,12 +104,12 @@ class AudioProcessor:
         with output_stream:
             while True:
                 # input_time_start = time.monotonic()
-
                 audio_packet = await audio_stream.get()
                 self.output_buffer.append(audio_packet)
                 # input_time_end = time.monotonic()
                 # delta_time = input_time_end - input_time_start
                 # print('output time = ' + str(delta_time))
+
     def get_buffer_size(self):
         return len(self.output_buffer)
 
