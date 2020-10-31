@@ -1,14 +1,17 @@
-from sqlalchemy import Column, Integer, String, Date
+from sqlalchemy import Column, Integer, String
 from database import Base
 
 
 class UserSettings(Base):
+    __tablename__ = 'UserSettings'
 
-    def __init__(self, saved_input_device, saved_output_device, input_sample_rate, output_sample_rate):
-        self.saved_input_device = saved_input_device
-        self.saved_output_device = saved_output_device
-        self.input_sample_rate = input_sample_rate
-        self.output_sample_rate = output_sample_rate
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    saved_input_device = Column(String)
+    saved_output_device = Column(String)
+    input_sample_rate = Column(Integer)
+    output_sample_rate = Column(Integer)
+    output_buffer_size = Column(Integer)
+    packet_length = Column(Integer)
 
     def __repr__(self):
         return self.attributes()

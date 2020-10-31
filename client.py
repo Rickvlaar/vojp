@@ -30,7 +30,7 @@ class UdpClient(asyncio.DatagramProtocol):
         self.frame_size = self.audio_processor.frame_size
         self.max_buffer_size = 1
         self.record_audio = record_audio
-        self.recording_file = sf.SoundFile(file='recordings/recording_' + str(datetime.now()) + '.wav',
+        self.recording_file = sf.SoundFile(file=str(datetime.now()) + '.wav',
                                            mode='w',
                                            samplerate=output_sample_rate,
                                            channels=1)

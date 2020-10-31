@@ -23,8 +23,6 @@ class AsyncUdpServer:
             received_packet_tuple = await self.audio_input_buffer.get()
             self.received += 1
             for listening_client in self.logged_in_clients:
-                # print('casting to')
-                # print(listening_client)
                 data = received_packet_tuple[0]
                 sender = received_packet_tuple[1]
                 if listening_client != sender or self.echo_mode:
