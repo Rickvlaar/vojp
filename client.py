@@ -7,6 +7,7 @@ import opuslib
 import soundfile as sf
 from datetime import datetime
 from audio_processor import AudioProcessor
+from os import path
 
 
 class UdpClient(asyncio.DatagramProtocol):
@@ -30,10 +31,11 @@ class UdpClient(asyncio.DatagramProtocol):
         self.frame_size = self.audio_processor.frame_size
         self.max_buffer_size = 1
         self.record_audio = record_audio
-        self.recording_file = sf.SoundFile(file=str(datetime.now()) + '.wav',
-                                           mode='w',
-                                           samplerate=output_sample_rate,
-                                           channels=1)
+        # TODO: Fix the recording path bug on windows
+        # self.recording_file = sf.SoundFile(file=str(datetime.now()) + '.wav',
+        #                                    mode='w',
+        #                                    samplerate=output_sample_rate,
+        #                                    channels=1)
         self.audio_udp_object = AudioUDPObject(sample_rate=self.input_sample_rate,
                                                frame_size=self.frame_size,
                                                sent_at=time.time_ns())
@@ -125,8 +127,8 @@ class UdpClient(asyncio.DatagramProtocol):
         asyncio.create_task(self.audio_processor.generate_output_stream(self.audio_output_buffer))
 
     async def record_audio_stream(self, audio_packet):
-        self.recording_file.buffer_write(audio_packet, dtype='int16')
-
+        print('wtf')
+        # self.recording_file.buffer_write(audio_packet, dtype='int16')
 
 class AudioUDPObject(object):
 
