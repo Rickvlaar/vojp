@@ -57,7 +57,9 @@ class AudioProcessor:
         loop = asyncio.get_running_loop()
 
         def process_input_stream(indata, frame_count, time_info, status):
-            loop.call_soon_threadsafe(queue_in.put_nowait, (indata.copy(), status))
+            raw_indata = indata.copy().tobytes()
+            if audioop.rms(raw_indata, 2) > 100:
+                loop.call_soon_threadsafe(queue_in.put_nowait, (raw_indata, status))
 
         with sd.InputStream(callback=process_input_stream,
                             samplerate=self.input_sample_rate,
@@ -75,7 +77,7 @@ class AudioProcessor:
 
     async def convert_stream_to_opus(self):
         async for indata, status in self.get_mic_input():
-            audio_frame = self.opus_encoder.encode(pcm_data=indata.tobytes(), frame_size=self.frame_size)
+            audio_frame = self.opus_encoder.encode(pcm_data=indata, frame_size=self.frame_size)
             yield audio_frame
 
     async def convert_opus_to_stream(self, opus_decoder, opus_data):

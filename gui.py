@@ -155,7 +155,7 @@ class Gui:
         # Start Server if asked
         if start_server:
             server = AsyncUdpServer(echo_mode=echo_mode)
-            asyncio.create_task(server.start_server())
+            asyncio.create_task(coro=server.start_server(), name='Run Server')
 
         asyncio.gather(self.client.start_client(),
                        self.run_gui_async())

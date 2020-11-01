@@ -1,5 +1,6 @@
 import asyncio
 import pickle
+import uuid
 import numpy as np
 import time
 import audioop
@@ -66,18 +67,18 @@ class UdpClient(asyncio.DatagramProtocol):
         self.latency = round(latency, 1)
         self.audio_input_buffer.put_nowait((addr, udp_object))
         self.received += 1
-        if addr not in self.logged_in_clients:
+        if udp_object.client_id not in self.logged_in_clients:
             new_client = ListeningClient(address=addr,
                                          sample_rate=udp_object.sample_rate,
                                          frame_size=udp_object.frame_size,
                                          parent_frame_size=self.frame_size)
 
-            self.logged_in_clients[addr] = new_client
+            self.logged_in_clients[udp_object.client_id] = new_client
             asyncio.create_task(new_client.decode_audio())
             print('Logged in Clients: ' + str(len(self.logged_in_clients)))
             self.new_client_event.set()
         else:
-            this_client = self.logged_in_clients.get(addr)
+            this_client = self.logged_in_clients.get(udp_object.client_id)
             this_client.encoded_audio_packet_queue.put_nowait(udp_object.audio_packet)
 
     async def stream_mic_input(self):
@@ -100,7 +101,7 @@ class UdpClient(asyncio.DatagramProtocol):
 
     async def sync_streams(self):
         await self.new_client_event.wait()  # release the loop while waiting for clients
-        wait_time = self.packet_length * 0.8
+        wait_time = self.packet_length * 0.1
         while True:
             # input_time_start = time.monotonic()
             await asyncio.sleep(wait_time)  # reduce cpu usage and free up thread
@@ -112,6 +113,8 @@ class UdpClient(asyncio.DatagramProtocol):
                         if combined_fragment is None:
                             combined_fragment = fragment
                         combined_fragment = audioop.add(combined_fragment, fragment, 2)
+                    if len(client.decoded_audio_packet_queue) > 5:
+                        client.decoded_audio_packet_queue.pop(0)
                 if combined_fragment:
                     self.audio_output_buffer.put_nowait(combined_fragment)
                     if self.record_audio:
@@ -130,9 +133,11 @@ class UdpClient(asyncio.DatagramProtocol):
         print('wtf')
         # self.recording_file.buffer_write(audio_packet, dtype='int16')
 
+
 class AudioUDPObject(object):
 
     def __init__(self, sample_rate, frame_size, sent_at, audio_packet=b''):
+        self.client_id = uuid.uuid4()
         self.sample_rate = sample_rate
         self.frame_size = frame_size
         self.sent_at = sent_at
