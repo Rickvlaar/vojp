@@ -20,7 +20,6 @@ class UdpClient(asyncio.DatagramProtocol):
         self.transport = asyncio.BaseTransport()
         self.server_address = (ip, port)
         self.logged_in_clients = dict()
-        self.audio_input_buffer = asyncio.Queue()
         self.audio_output_buffer = asyncio.Queue()
         self.packet_length = packet_length
         self.input_sample_rate = input_sample_rate
@@ -65,21 +64,21 @@ class UdpClient(asyncio.DatagramProtocol):
         udp_object = pickle.loads(data)
         latency = (time.time_ns() - udp_object.sent_at) / 1000000
         self.latency = round(latency, 1)
-        self.audio_input_buffer.put_nowait((addr, udp_object))
         self.received += 1
         if udp_object.client_id not in self.logged_in_clients:
             new_client = ListeningClient(address=addr,
                                          sample_rate=udp_object.sample_rate,
                                          frame_size=udp_object.frame_size,
                                          parent_frame_size=self.frame_size)
-
+            new_client.latency = latency
             self.logged_in_clients[udp_object.client_id] = new_client
             asyncio.create_task(new_client.decode_audio())
             print('Logged in Clients: ' + str(len(self.logged_in_clients)))
             self.new_client_event.set()
         else:
             this_client = self.logged_in_clients.get(udp_object.client_id)
-            this_client.encoded_audio_packet_queue.put_nowait(udp_object.audio_packet)
+            if this_client.latency < latency + 100:
+                this_client.encoded_audio_packet_queue.put_nowait(udp_object.audio_packet)
 
     async def stream_mic_input(self):
         """
@@ -151,6 +150,7 @@ class ListeningClient:
         self.sample_rate = sample_rate
         self.frame_size = frame_size
         self.parent_frame_size = parent_frame_size
+        self.latency = 0
         self.encoded_audio_packet_queue = asyncio.Queue()
         self.decoded_audio_packet_queue = list()
         self.opus_decoder = opuslib.Decoder(fs=sample_rate, channels=1)
@@ -165,7 +165,6 @@ class ListeningClient:
                 decoded_audio_packet = decoded_audio_packet.split(maxsplit=split_factor)
 
             self.decoded_audio_packet_queue.append(decoded_audio_packet)
-            print(len(self.decoded_audio_packet_queue))
             # input_time_end = time.monotonic()
             # delta_time = (input_time_end - input_time_start) * 1000
             # delta_time = round(delta_time, 1)
