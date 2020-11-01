@@ -165,6 +165,7 @@ class ListeningClient:
                 decoded_audio_packet = decoded_audio_packet.split(maxsplit=split_factor)
 
             self.decoded_audio_packet_queue.append(decoded_audio_packet)
+            print(len(self.decoded_audio_packet_queue))
             # input_time_end = time.monotonic()
             # delta_time = (input_time_end - input_time_start) * 1000
             # delta_time = round(delta_time, 1)

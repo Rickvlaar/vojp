@@ -58,8 +58,7 @@ class AudioProcessor:
 
         def process_input_stream(indata, frame_count, time_info, status):
             raw_indata = indata.copy().tobytes()
-            if audioop.rms(raw_indata, 2) > 100:
-                loop.call_soon_threadsafe(queue_in.put_nowait, (raw_indata, status))
+            loop.call_soon_threadsafe(queue_in.put_nowait, (raw_indata, status))
 
         with sd.InputStream(callback=process_input_stream,
                             samplerate=self.input_sample_rate,
