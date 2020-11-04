@@ -1,11 +1,12 @@
 import asyncio
-from gui import Gui
 import logging
+from gui import Gui
+
+
+logging.basicConfig(filename='logs/voip.log', format='%(asctime)s  %(levelname)s:%(message)s', level=logging.DEBUG)
 
 
 async def main():
-    # logging.basicConfig(level=logging.DEBUG)
-
     # Show Gui
     gui = Gui()
     gui.start_gui()
@@ -15,6 +16,7 @@ async def main():
 
 
 async def shutdown():
+    logging.info(msg='Shutting down asyncio event loop')
     loop = asyncio.get_running_loop()
     tasks = [task for task in asyncio.all_tasks() if task != asyncio.current_task()]
     [task.cancel() for task in tasks]
@@ -27,5 +29,5 @@ if __name__ == '__main__':
     try:
         asyncio.run(main(), debug=False)
     except:
-        # asyncio.get_running_loop().create_task(shutdown())
+        logging.info(msg='Asyncio event loop has been stopped successfully')
         print('Loop has been stopped successfully')

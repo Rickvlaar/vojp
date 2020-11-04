@@ -1,3 +1,4 @@
+import logging
 import asyncio
 import pickle
 import uuid
@@ -45,6 +46,7 @@ class UdpClient(asyncio.DatagramProtocol):
         self.received = 0
 
     async def start_client(self):
+        logging.info(msg='Starting client')
         print('starting client')
         loop = asyncio.get_running_loop()
         self.transport, self.protocol = await loop.create_datagram_endpoint(
@@ -73,6 +75,7 @@ class UdpClient(asyncio.DatagramProtocol):
             new_client.latency = latency
             self.logged_in_clients[udp_object.client_id] = new_client
             asyncio.create_task(new_client.decode_audio())
+            logging.info(msg='New client registered. Currently listening to ' + str(len(self.logged_in_clients)) + ' clients')
             print('Logged in Clients: ' + str(len(self.logged_in_clients)))
             self.new_client_event.set()
         else:
@@ -86,6 +89,7 @@ class UdpClient(asyncio.DatagramProtocol):
         """
         while True:
             async for input_packet in self.audio_processor.convert_stream_to_opus():
+                logging.debug(msg='Streaming microphone input')
                 # input_time_start = time.monotonic()
                 # print('streaming')
                 self.audio_udp_object.audio_packet = input_packet
@@ -99,9 +103,11 @@ class UdpClient(asyncio.DatagramProtocol):
                 # print('streaming time = ' + str(delta_time))
 
     async def sync_streams(self):
+        logging.info(msg='Starting client audio stream sync coroutine')
         await self.new_client_event.wait()  # release the loop while waiting for clients
-        wait_time = self.packet_length * 0.1
+        wait_time = self.packet_length * 0.5
         while True:
+            logging.debug(msg='Syncing client audio streams')
             # input_time_start = time.monotonic()
             await asyncio.sleep(wait_time)  # reduce cpu usage and free up thread
             if self.audio_processor.get_buffer_size() < self.max_buffer_size:
@@ -124,6 +130,8 @@ class UdpClient(asyncio.DatagramProtocol):
             # print('sync time = ' + str(delta_time))
 
     async def output_audio(self):
+        logging.info(msg='Starting audio output coroutines')
+
         print('Starting Output')
         asyncio.create_task(self.sync_streams())
         asyncio.create_task(self.audio_processor.generate_output_stream(self.audio_output_buffer))
@@ -156,8 +164,9 @@ class ListeningClient:
         self.opus_decoder = opuslib.Decoder(fs=sample_rate, channels=1)
 
     async def decode_audio(self):
+        logging.info(msg='Client ' + str(self.address) + ' latency is ' + str(self.latency) + ' ms')
         while True:
-            # input_time_start = time.monotonic()            # print('decoding')
+            logging.debug(msg='Decoding client ' + str(self.address) + ' audio packet')
             encoded_audio_packet = await self.encoded_audio_packet_queue.get()
             decoded_audio_packet = self.opus_decoder.decode(opus_data=encoded_audio_packet, frame_size=self.frame_size)
             if self.frame_size > self.parent_frame_size:

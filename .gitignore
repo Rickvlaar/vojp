@@ -1,6 +1,6 @@
 # Custom additions
-executable
-recordings
+recordings/
+logs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
