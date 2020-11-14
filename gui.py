@@ -141,9 +141,9 @@ class Gui:
         echo_mode = self.echo_mode_var.get()
         record_audio = self.record_var.get()
 
-        logging.debug(msg='Application started')
-        logging.debug(msg='Input device id: ' + audio_input_device_id)
-        logging.debug(msg='Output device id: ' + audio_output_device_id)
+        logging.info(msg='Application started')
+        logging.info(msg='Input device id: ' + audio_input_device_id)
+        logging.info(msg='Output device id: ' + audio_output_device_id)
 
         self.client = UdpClient(ip=ip,
                                 port=port,

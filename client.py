@@ -83,7 +83,7 @@ class UdpClient(asyncio.DatagramProtocol):
             if this_client.latency < latency + 100:
                 this_client.encoded_audio_packet_queue.put_nowait(udp_object.audio_packet)
             else:
-                logging.info(msg='Dropping packet due to latency. Latency was: ' + str(this_client.latency) + 'ms')
+                logging.warning(msg='Dropping packet due to latency. Latency was: ' + str(this_client.latency) + 'ms')
 
     async def stream_mic_input(self):
         """
@@ -121,7 +121,7 @@ class UdpClient(asyncio.DatagramProtocol):
                             combined_fragment = fragment
                         combined_fragment = audioop.add(combined_fragment, fragment, 2)
                     if len(client.decoded_audio_packet_queue) > 5:
-                        logging.debug(msg='Buffer overload. Skipping packet')
+                        logging.warning(msg='Buffer overload. Skipping packet')
                         client.decoded_audio_packet_queue.pop(0)
                 if combined_fragment:
                     self.audio_output_buffer.put_nowait(combined_fragment)

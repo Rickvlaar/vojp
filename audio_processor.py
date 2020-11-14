@@ -109,7 +109,7 @@ class AudioProcessor:
         with output_stream:
             while True:
                 # input_time_start = time.monotonic()
-                logging.debug(msg='Outputing audio packet')
+                logging.debug(msg='Outputting audio packet')
                 audio_packet = await audio_stream.get()
                 self.output_buffer.append(audio_packet)
                 # input_time_end = time.monotonic()
