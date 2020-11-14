@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from audio_processor import get_all_devices
 from client import UdpClient
 from server import AsyncUdpServer
@@ -140,9 +141,9 @@ class Gui:
         echo_mode = self.echo_mode_var.get()
         record_audio = self.record_var.get()
 
-        print('clicked!')
-        print('input: ' + audio_input_device_id)
-        print('output: ' + audio_output_device_id)
+        logging.debug(msg='Application started')
+        logging.debug(msg='Input device id: ' + audio_input_device_id)
+        logging.debug(msg='Output device id: ' + audio_output_device_id)
 
         self.client = UdpClient(ip=ip,
                                 port=port,

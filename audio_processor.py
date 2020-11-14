@@ -1,6 +1,7 @@
 import queue
 import asyncio
 import opuslib
+import logging
 import opuslib.api.encoder
 import opuslib.api.ctl
 import time
@@ -69,6 +70,8 @@ class AudioProcessor:
             while True:
                 # input_time_start = time.monotonic()
                 indata, status = await queue_in.get()
+                logging.debug(msg='Microphone input packet created')
+
                 yield indata, status
                 # input_time_end = time.monotonic()
                 # delta_time = input_time_end - input_time_start
@@ -76,6 +79,7 @@ class AudioProcessor:
 
     async def convert_stream_to_opus(self):
         async for indata, status in self.get_mic_input():
+            logging.debug(msg='Converting microphone audio packet to opus')
             audio_frame = self.opus_encoder.encode(pcm_data=indata, frame_size=self.frame_size)
             yield audio_frame
 
@@ -105,6 +109,7 @@ class AudioProcessor:
         with output_stream:
             while True:
                 # input_time_start = time.monotonic()
+                logging.debug(msg='Outputing audio packet')
                 audio_packet = await audio_stream.get()
                 self.output_buffer.append(audio_packet)
                 # input_time_end = time.monotonic()
