@@ -1,9 +1,10 @@
 import asyncio
 import logging
 from gui import Gui
+from datetime import datetime
 
 
-logging.basicConfig(filename='logs/voip.log', format='%(asctime)s  %(levelname)s:%(message)s', level=logging.DEBUG)
+logging.basicConfig(filename='logs/voip_' + str(datetime.now()) + '.log', format='%(asctime)s  %(levelname)s:%(message)s', level=logging.DEBUG)
 
 
 async def main():
