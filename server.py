@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 # Port 0 means to select an arbitrary unused port
 dev_server_address = '127.0.0.1', 5000
@@ -30,7 +31,7 @@ class AsyncUdpServer:
                     self.sent += 1
 
     async def start_server(self):
-        print('server starting')
+        logging.info(msg='Server starting')
         loop = asyncio.get_running_loop()
 
         self.transport, self.protocol = await loop.create_datagram_endpoint(

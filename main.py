@@ -4,7 +4,7 @@ from gui import Gui
 from datetime import datetime
 
 
-logging.basicConfig(filename='logs/voip.log', format='%(asctime)s  %(levelname)s:%(message)s', level=logging.DEBUG)
+logging.basicConfig(filename='logs/voip_' + str(datetime.now()).replace(':', '_') + '.log', format='%(asctime)s  %(levelname)s:%(message)s', level=logging.DEBUG)
 
 
 async def main():
@@ -31,4 +31,3 @@ if __name__ == '__main__':
         asyncio.run(main(), debug=False)
     except:
         logging.info(msg='Asyncio event loop has been stopped successfully')
-        print('Loop has been stopped successfully')

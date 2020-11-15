@@ -76,7 +76,6 @@ class UdpClient(asyncio.DatagramProtocol):
             self.logged_in_clients[udp_object.client_id] = new_client
             asyncio.create_task(new_client.decode_audio())
             logging.info(msg='New client registered. Currently listening to ' + str(len(self.logged_in_clients)) + ' clients')
-            print('Logged in Clients: ' + str(len(self.logged_in_clients)))
             self.new_client_event.set()
         else:
             this_client = self.logged_in_clients.get(udp_object.client_id)
@@ -106,7 +105,7 @@ class UdpClient(asyncio.DatagramProtocol):
 
     async def sync_streams(self):
         logging.info(msg='Starting client audio stream sync coroutine')
-        await self.new_client_event.wait()  # release the loop while waiting for clients
+        # await asyncio.create_task(self.new_client_event.wait())  # release the loop while waiting for clients
         wait_time = self.packet_length * 0.5
         while True:
             # input_time_start = time.monotonic()
@@ -136,9 +135,8 @@ class UdpClient(asyncio.DatagramProtocol):
     async def output_audio(self):
         logging.info(msg='Starting audio output coroutines')
 
-        print('Starting Output')
-        asyncio.create_task(self.sync_streams())
-        asyncio.create_task(self.audio_processor.generate_output_stream(self.audio_output_buffer))
+        await asyncio.gather(self.sync_streams(),
+                             self.audio_processor.generate_output_stream(self.audio_output_buffer))
 
     async def record_audio_stream(self, audio_packet):
         print('wtf')

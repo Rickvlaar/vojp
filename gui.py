@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import threading
 from audio_processor import get_all_devices
 from client import UdpClient
 from server import AsyncUdpServer
@@ -156,7 +157,7 @@ class Gui:
         # Start Server if asked
         if start_server:
             server = AsyncUdpServer(echo_mode=echo_mode)
-            asyncio.create_task(coro=server.start_server(), name='Run Server')
+            asyncio.gather(server.start_server())
 
         asyncio.gather(self.client.start_client(),
                        self.run_gui_async())
@@ -171,8 +172,10 @@ class Gui:
         await self.show_connected_state()
         while True:
             try:
+                logging.debug(msg='Gui updating')
                 self.latency_var.set(self.client.latency)
                 self.gui.update()
+                logging.debug(msg='Gui update finished')
                 await asyncio.sleep(0.1)
             except:
                 from main import shutdown
