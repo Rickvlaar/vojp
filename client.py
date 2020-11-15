@@ -30,7 +30,7 @@ class UdpClient(asyncio.DatagramProtocol):
                                               audio_input_device_id=audio_input_device_id,
                                               audio_output_device_id=audio_output_device_id)
         self.frame_size = self.audio_processor.frame_size
-        self.max_buffer_size = 1
+        self.max_buffer_size = 5
         self.record_audio = record_audio
         # TODO: Fix the recording path bug on windows
         # self.recording_file = sf.SoundFile(file=str(datetime.now()) + '.wav',
@@ -106,7 +106,7 @@ class UdpClient(asyncio.DatagramProtocol):
     async def sync_streams(self):
         logging.info(msg='Starting client audio stream sync coroutine')
         # await asyncio.create_task(self.new_client_event.wait())  # release the loop while waiting for clients
-        wait_time = self.packet_length * 0.5
+        wait_time = self.packet_length * 0.1
         while True:
             # input_time_start = time.monotonic()
             await asyncio.sleep(wait_time)  # reduce cpu usage and free up thread
@@ -120,7 +120,7 @@ class UdpClient(asyncio.DatagramProtocol):
                             combined_fragment = fragment
                         combined_fragment = audioop.add(combined_fragment, fragment, 2)
                     if len(client.decoded_audio_packet_queue) > 5:
-                        logging.warning(msg='Buffer overload. Skipping packet')
+                        logging.warning(msg='Buffer overload. Skipping packet. Buffer size is ' + str(len(client.decoded_audio_packet_queue)))
                         client.decoded_audio_packet_queue.pop(0)
                 if combined_fragment:
                     self.audio_output_buffer.put_nowait(combined_fragment)

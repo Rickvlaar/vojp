@@ -59,7 +59,7 @@ class AudioProcessor:
 
         def process_input_stream(indata, frame_count, time_info, status):
             raw_indata = indata.copy().tobytes()
-            loop.call_soon(queue_in.put_nowait, (raw_indata, status))
+            loop.call_soon_threadsafe(queue_in.put_nowait, (raw_indata, status))
 
         with sd.InputStream(callback=process_input_stream,
                             samplerate=self.input_sample_rate,
@@ -110,9 +110,9 @@ class AudioProcessor:
         with output_stream:
             while True:
                 # input_time_start = time.monotonic()
-                logging.debug(msg='Outputting audio packet')
                 audio_packet = await audio_stream.get()
                 self.output_buffer.append(audio_packet)
+                logging.debug(msg='Outputting audio packet. Current buffersize is ' + str(len(self.output_buffer)))
                 # input_time_end = time.monotonic()
                 # delta_time = input_time_end - input_time_start
                 # print('output time = ' + str(delta_time))
