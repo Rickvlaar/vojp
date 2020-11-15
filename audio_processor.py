@@ -94,6 +94,7 @@ class AudioProcessor:
 
         def process_output_stream(outdata, frame_count, time_info, status):
             # If the buffer is empty, play silence
+            logging.debug(msg='Playing audio')
             if len(self.output_buffer) > 0:
                 outdata[:] = self.output_buffer.pop(0)
             else:
@@ -130,6 +131,7 @@ def set_default_device():
 
 def get_all_devices():
     sound_devices = sd.query_devices()
+    logging.info(msg='Audio devices available on system:\n' + str(sound_devices))
     for index, device in enumerate(sound_devices):
         device['device_index'] = index
     return sound_devices
