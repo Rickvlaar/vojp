@@ -79,10 +79,10 @@ class UdpClient(asyncio.DatagramProtocol):
             self.new_client_event.set()
         else:
             this_client = self.logged_in_clients.get(udp_object.client_id)
-            if this_client.latency < latency + 100:
+            if latency < this_client.latency + 100:
                 this_client.encoded_audio_packet_queue.put_nowait(udp_object.audio_packet)
             else:
-                logging.warning(msg='Dropping packet due to latency. Latency was: ' + str(this_client.latency) + 'ms')
+                logging.warning(msg='Dropping packet due to latency. Latency was: ' + str(latency) + 'ms')
 
     async def stream_mic_input(self):
         """
