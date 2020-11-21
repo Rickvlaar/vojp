@@ -1,9 +1,8 @@
 import asyncio
 import logging
-import threading
-from audio_processor import get_all_devices
-from client import UdpClient
-from server import AsyncUdpServer
+from vojp.audio_processor import get_all_devices
+from vojp.client import UdpClient
+from vojp.server import AsyncUdpServer
 import tkinter as tk
 import tkinter.ttk as ttk
 
@@ -178,5 +177,5 @@ class Gui:
                 logging.debug(msg='Gui update finished')
                 await asyncio.sleep(0.1)
             except:
-                from main import shutdown
+                from vojp.main import shutdown
                 await shutdown()

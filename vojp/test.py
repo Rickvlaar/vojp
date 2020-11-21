@@ -1,5 +1,4 @@
 import unittest
-from client import UdpClient
 
 
 class TestClientLogic(unittest.TestCase):

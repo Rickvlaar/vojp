@@ -2,14 +2,10 @@ import logging
 import asyncio
 import pickle
 import uuid
-import numpy as np
 import time
 import audioop
 import opuslib
-import soundfile as sf
-from datetime import datetime
-from audio_processor import AudioProcessor
-from os import path
+from vojp.audio_processor import AudioProcessor
 
 
 class UdpClient(asyncio.DatagramProtocol):
@@ -75,11 +71,12 @@ class UdpClient(asyncio.DatagramProtocol):
             new_client.latency = latency
             self.logged_in_clients[udp_object.client_id] = new_client
             asyncio.create_task(new_client.decode_audio())
-            logging.info(msg='New client registered. Currently listening to ' + str(len(self.logged_in_clients)) + ' clients')
+            logging.info(
+                msg='New client registered. Currently listening to ' + str(len(self.logged_in_clients)) + ' clients')
             self.new_client_event.set()
         else:
             this_client = self.logged_in_clients.get(udp_object.client_id)
-            if latency < this_client.latency + 100:
+            if latency < this_client.latency + self.max_buffer_size * 10:
                 this_client.encoded_audio_packet_queue.put_nowait(udp_object.audio_packet)
             else:
                 logging.warning(msg='Dropping packet due to latency. Latency was: ' + str(latency) + 'ms')
@@ -120,7 +117,8 @@ class UdpClient(asyncio.DatagramProtocol):
                             combined_fragment = fragment
                         combined_fragment = audioop.add(combined_fragment, fragment, 2)
                     if len(client.decoded_audio_packet_queue) > 5:
-                        logging.warning(msg='Buffer overload. Skipping packet. Buffer size is ' + str(len(client.decoded_audio_packet_queue)))
+                        logging.warning(msg='Buffer overload. Skipping packet. Buffer size is ' + str(
+                            len(client.decoded_audio_packet_queue)))
                         client.decoded_audio_packet_queue.pop(0)
                 if combined_fragment:
                     self.audio_output_buffer.put_nowait(combined_fragment)
