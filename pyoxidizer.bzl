@@ -153,7 +153,7 @@ def make_exe(dist):
     # python_config.write_modules_directory_env = "/tmp/oxidized/loaded_modules"
 
     # Evaluate a string as Python code when the interpreter starts.
-    #  python_config.run_command = "from vojp import main"
+    python_config.run_command = "import vojp"
 
     # Run a Python module as __main__ when the interpreter starts.
     # python_config.run_module = "<module>"
@@ -183,7 +183,7 @@ def make_exe(dist):
     # exe.windows_subsystem = "console"
 
     # Make the executable a non-console application on Windows.
-    # exe.windows_subsystem = "windows"
+    exe.windows_subsystem = "windows"
 
     # Invoke `pip download` to install a single package using wheel archives
     # obtained via `pip download`. `pip_download()` returns objects representing

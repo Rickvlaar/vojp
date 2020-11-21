@@ -21,6 +21,15 @@ class Gui:
         self.ip_address_input = ttk.Entry(master=self.frame)
         self.port_input = ttk.Entry(master=self.frame)
 
+        debug_level_options = ['INFO', 'DEBUG']
+        self.debug_level_var = tk.StringVar(master=self.frame,
+                                            value=debug_level_options[0])
+
+        self.debug_level_select = ttk.OptionMenu(self.frame,
+                                                 self.debug_level_var,
+                                                 debug_level_options[0],
+                                                 *debug_level_options[1:])
+
         self.input_sample_rate_var = tk.IntVar(master=self.frame, name='input_sample_rate', value=48000)
         self.output_sample_rate_var = tk.IntVar(master=self.frame, name='output_sample_rate', value=48000)
 
@@ -92,6 +101,10 @@ class Gui:
         self.port_input.pack()
         self.port_input.insert(0, '5000')
 
+        debug_level_label = ttk.Label(master=self.frame, text='Set Debug Level')
+        debug_level_label.pack()
+        self.debug_level_select.pack()
+
         input_device_label = ttk.Label(master=self.frame, text='Select Input Device')
         input_device_label.pack()
         self.input_device_select.pack()
@@ -133,6 +146,7 @@ class Gui:
     def connect_client(self):
         ip = self.ip_address_input.get()
         port = int(self.port_input.get())
+        debug_level = self.debug_level_var.get()
         audio_input_device_id = self.input_device_var.get()[0]
         audio_output_device_id = self.output_device_var.get()[0]
         input_sample_rate = self.input_sample_rate_var.get()
@@ -141,6 +155,7 @@ class Gui:
         echo_mode = self.echo_mode_var.get()
         record_audio = self.record_var.get()
 
+        logging.getLogger().setLevel(level=debug_level)
         logging.info(msg='Application started')
         logging.info(msg='Input device id: ' + audio_input_device_id)
         logging.info(msg='Output device id: ' + audio_output_device_id)

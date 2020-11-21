@@ -1,9 +1,12 @@
 import asyncio
+import os
 import logging
 from vojp.gui import Gui
+from datetime import datetime
 
 
 async def main():
+    setup_logger()
     # Show Gui
     gui = Gui()
     gui.start_gui()
@@ -21,9 +24,14 @@ async def shutdown():
     loop.stop()
 
 
-if __name__ == '__main__':
+def setup_logger():
+    log_path = os.path.dirname(os.path.realpath(__file__)) + '/logs'
 
-    try:
-        asyncio.run(main(), debug=False)
-    except:
-        logging.info(msg='Asyncio event loop has been stopped successfully')
+    if os.path.exists(log_path):
+        pass
+    else:
+        os.mkdir(log_path)
+
+    logging.basicConfig(filename=log_path + '/voip_' + str(datetime.now()).replace(':', '_') + '.log',
+                        format='%(asctime)s  %(levelname)s:%(message)s',
+                        level=logging.DEBUG)
