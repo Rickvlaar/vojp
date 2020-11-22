@@ -1,4 +1,5 @@
 import os
+import platform
 import logging
 import asyncio
 from database import util
@@ -15,6 +16,9 @@ if os.path.exists(Config.LOG_DIR):
     pass
 else:
     os.mkdir(Config.LOG_DIR)
+
+if platform.system() == 'Windows':
+    os.add_dll_directory(Config.WIN_DLL_DIR)
 
 if not util.check_data_model():
     util.create_data_model()
