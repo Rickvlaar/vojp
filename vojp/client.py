@@ -5,7 +5,10 @@ import uuid
 import time
 import audioop
 import opuslib
+import soundfile as sf
+from datetime import datetime
 from vojp.audio_processor import AudioProcessor
+from vojp.config import Config
 
 
 class UdpClient(asyncio.DatagramProtocol):
@@ -26,13 +29,13 @@ class UdpClient(asyncio.DatagramProtocol):
                                               audio_input_device_id=audio_input_device_id,
                                               audio_output_device_id=audio_output_device_id)
         self.frame_size = self.audio_processor.frame_size
-        self.max_buffer_size = 5
+        self.max_buffer_size = 5  # buffer size in packets
         self.record_audio = record_audio
-        # TODO: Fix the recording path bug on windows
-        # self.recording_file = sf.SoundFile(file=str(datetime.now()) + '.wav',
-        #                                    mode='w',
-        #                                    samplerate=output_sample_rate,
-        #                                    channels=1)
+        self.recording_file = sf.SoundFile(
+            file=Config.RECORDING_DIR + '/' + str(datetime.now()).replace(':', '_') + '.wav',
+            mode='w',
+            samplerate=output_sample_rate,
+            channels=1)
         self.audio_udp_object = AudioUDPObject(sample_rate=self.input_sample_rate,
                                                frame_size=self.frame_size,
                                                sent_at=time.time_ns())
@@ -43,7 +46,6 @@ class UdpClient(asyncio.DatagramProtocol):
 
     async def start_client(self):
         logging.info(msg='Starting client')
-        print('starting client')
         loop = asyncio.get_running_loop()
         self.transport, self.protocol = await loop.create_datagram_endpoint(
                 protocol_factory=lambda: self,
@@ -72,7 +74,8 @@ class UdpClient(asyncio.DatagramProtocol):
             self.logged_in_clients[udp_object.client_id] = new_client
             asyncio.create_task(new_client.decode_audio())
             logging.info(
-                msg='New client registered. Currently listening to ' + str(len(self.logged_in_clients)) + ' clients')
+                    msg='New client registered. Currently listening to ' + str(
+                        len(self.logged_in_clients)) + ' clients')
             self.new_client_event.set()
         else:
             this_client = self.logged_in_clients.get(udp_object.client_id)
@@ -88,24 +91,18 @@ class UdpClient(asyncio.DatagramProtocol):
         while True:
             async for input_packet in self.audio_processor.convert_stream_to_opus():
                 logging.debug(msg='Streaming microphone input')
-                # input_time_start = time.monotonic()
-                # print('streaming')
+
                 self.audio_udp_object.audio_packet = input_packet
                 self.audio_udp_object.sent_at = time.time_ns()
                 upd_object = pickle.dumps(self.audio_udp_object)
                 self.sent += 1
                 self.transport.sendto(upd_object, self.server_address)
 
-                # input_time_end = time.monotonic()
-                # delta_time = input_time_end - input_time_start
-                # print('streaming time = ' + str(delta_time))
-
     async def sync_streams(self):
         logging.info(msg='Starting client audio stream sync coroutine')
         # await asyncio.create_task(self.new_client_event.wait())  # release the loop while waiting for clients
         wait_time = self.packet_length * 0.1
         while True:
-            # input_time_start = time.monotonic()
             await asyncio.sleep(wait_time)  # reduce cpu usage and free up thread
             logging.debug(msg='Syncing client audio streams')
             if self.audio_processor.get_buffer_size() < self.max_buffer_size:
@@ -118,17 +115,13 @@ class UdpClient(asyncio.DatagramProtocol):
                         combined_fragment = audioop.add(combined_fragment, fragment, 2)
                     if len(client.decoded_audio_packet_queue) > 5:
                         logging.warning(msg='Buffer overload. Skipping packet. Buffer size is ' + str(
-                            len(client.decoded_audio_packet_queue)))
+                                len(client.decoded_audio_packet_queue)))
                         client.decoded_audio_packet_queue.pop(0)
                 if combined_fragment:
                     self.audio_output_buffer.put_nowait(combined_fragment)
                     if self.record_audio:
                         await self.record_audio_stream(combined_fragment)
             logging.debug(msg='Sync finished')
-
-            # input_time_end = time.monotonic()
-            # delta_time = input_time_end - input_time_start
-            # print('sync time = ' + str(delta_time))
 
     async def output_audio(self):
         logging.info(msg='Starting audio output coroutines')
@@ -137,8 +130,7 @@ class UdpClient(asyncio.DatagramProtocol):
                              self.audio_processor.generate_output_stream(self.audio_output_buffer))
 
     async def record_audio_stream(self, audio_packet):
-        print('wtf')
-        # self.recording_file.buffer_write(audio_packet, dtype='int16')
+        self.recording_file.buffer_write(audio_packet, dtype='int16')
 
 
 class AudioUDPObject(object):
@@ -174,7 +166,3 @@ class ListeningClient:
                 decoded_audio_packet = decoded_audio_packet.split(maxsplit=split_factor)
 
             self.decoded_audio_packet_queue.append(decoded_audio_packet)
-            # input_time_end = time.monotonic()
-            # delta_time = (input_time_end - input_time_start) * 1000
-            # delta_time = round(delta_time, 1)
-            # print('Decoding time = ' + str(delta_time) + ' ms')

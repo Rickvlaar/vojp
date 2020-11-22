@@ -1,7 +1,7 @@
 import asyncio
-import os
 import logging
 from vojp.gui import Gui
+from vojp.config import Config
 from datetime import datetime
 
 
@@ -12,7 +12,7 @@ async def main():
     gui.start_gui()
 
     while True:
-        await asyncio.sleep(50000)
+        await asyncio.sleep(1)
 
 
 async def shutdown():
@@ -25,13 +25,6 @@ async def shutdown():
 
 
 def setup_logger():
-    log_path = os.path.dirname(os.path.realpath(__file__)) + '/logs'
-
-    if os.path.exists(log_path):
-        pass
-    else:
-        os.mkdir(log_path)
-
-    logging.basicConfig(filename=log_path + '/voip_' + str(datetime.now()).replace(':', '_') + '.log',
+    logging.basicConfig(filename=Config.LOG_DIR + '/voip_' + str(datetime.now()).replace(':', '_') + '.log',
                         format='%(asctime)s  %(levelname)s:%(message)s',
                         level=logging.DEBUG)

@@ -1,4 +1,14 @@
-from database import data_model, engine
+import inspect
+from database import data_model, engine, Base
+
+
+def check_data_model():
+    for table_name in Base.metadata.tables:
+        if engine.has_table(table_name=table_name):
+            pass
+        else:
+            return False
+    return True
 
 
 # Should only be run one time to build the schema
