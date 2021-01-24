@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import configparser
 from vojp.audio_processor import get_all_devices
 from vojp.client import UdpClient
 from vojp.server import AsyncUdpServer
@@ -58,12 +59,12 @@ class Gui:
         self.input_device_select = ttk.OptionMenu(self.frame,
                                                   self.input_device_var,
                                                   input_devices[0],
-                                                  *tuple(input_devices)[1:])
+                                                  *tuple(input_devices))
 
         self.output_device_select = ttk.OptionMenu(self.frame,
                                                    self.output_device_var,
                                                    output_devices[0],
-                                                   *tuple(output_devices)[1:])
+                                                   *tuple(output_devices))
 
         self.connect_button = ttk.Button(master=self.frame, command=self.connect_client, text='Connect',
                                          width=10)
@@ -83,6 +84,26 @@ class Gui:
                                                variable=self.record_var)
 
         self.latency_var = tk.StringVar(master=self.right_frame, value=0)
+        self.read_config()
+
+    def read_config(self):
+        config = configparser.ConfigParser()
+        config.read('vojp_config.ini')
+        default_settings = config['DEFAULT']
+        self.ip_address_input.insert(0, default_settings['ip'])
+        self.port_input.insert(0, default_settings['port'])
+        self.input_device_var.set(default_settings['audio_input_device_id'])
+        self.output_device_var.set(default_settings['audio_output_device_id'])
+
+    def save_config(self):
+        config = configparser.ConfigParser()
+        default_settings = config['DEFAULT']
+        default_settings['ip'] = self.ip_address_input.get()
+        default_settings['port'] = self.port_input.get()
+        default_settings['audio_input_device_id'] = self.input_device_var.get()[0]
+        default_settings['audio_output_device_id'] = self.output_device_var.get()[0]
+        with open('vojp_config.ini', 'w') as configfile:
+            config.write(configfile)
 
     def start_gui(self):
         self.frame.pack()
@@ -94,12 +115,10 @@ class Gui:
         ip_label = ttk.Label(master=self.frame, text='IP Address')
         ip_label.pack()
         self.ip_address_input.pack()
-        self.ip_address_input.insert(0, '31.151.58.233')
 
         port_label = ttk.Label(master=self.frame, text='Port')
         port_label.pack()
         self.port_input.pack()
-        self.port_input.insert(0, '5000')
 
         debug_level_label = ttk.Label(master=self.frame, text='Set Debug Level')
         debug_level_label.pack()
@@ -154,6 +173,8 @@ class Gui:
         start_server = self.start_server_var.get()
         echo_mode = self.echo_mode_var.get()
         record_audio = self.record_var.get()
+
+        self.save_config()
 
         logging.getLogger().setLevel(level=debug_level)
         logging.info(msg='Application started')
