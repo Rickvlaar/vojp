@@ -169,8 +169,8 @@ class Gui:
         ip = self.ip_address_input.get()
         port = int(self.port_input.get())
         debug_level = self.debug_level_var.get()
-        audio_input_device_id = self.input_device_var.get()[0]
-        audio_output_device_id = self.output_device_var.get()[0]
+        audio_input_device_id = self.device_name_id_dict.get(self.input_device_var.get())
+        audio_output_device_id = self.device_name_id_dict.get(self.output_device_var.get())
         input_sample_rate = self.input_sample_rate_var.get()
         output_sample_rate = self.output_sample_rate_var.get()
         start_server = self.start_server_var.get()
@@ -181,8 +181,8 @@ class Gui:
 
         logging.getLogger().setLevel(level=debug_level)
         logging.info(msg='Application started')
-        logging.info(msg='Input device id: ' + audio_input_device_id)
-        logging.info(msg='Output device id: ' + audio_output_device_id)
+        logging.info(msg='Input device id: ' + str(audio_input_device_id))
+        logging.info(msg='Output device id: ' + str(audio_output_device_id))
 
         self.client = UdpClient(ip=ip,
                                 port=port,
