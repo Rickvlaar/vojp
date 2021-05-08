@@ -4,6 +4,7 @@ import configparser
 from vojp.audio_processor import get_all_devices
 from vojp.client import UdpClient
 from vojp.server import AsyncUdpServer
+from vojp.config import Config
 import tkinter as tk
 import tkinter.ttk as ttk
 
@@ -90,24 +91,23 @@ class Gui:
         self.read_config()
 
     def read_config(self):
-        config = configparser.ConfigParser()
-        config.read('vojp_config.ini')
-        default_settings = config['DEFAULT']
-        self.ip_address_input.insert(0, default_settings['ip'])
-        self.port_input.insert(0, default_settings['port'])
+        parser = configparser.ConfigParser()
+        parser.read(Config.CONFIG_FILE)
+        default_settings = parser['DEFAULT']
+        self.ip_address_input.insert(0, default_settings.get('ip'))
+        self.port_input.insert(0, default_settings.get('port'))
         self.input_device_var.set(self.device_id_name_dict.get(int(default_settings['audio_input_device_id'])))
         self.output_device_var.set(self.device_id_name_dict.get(int(default_settings['audio_output_device_id'])))
 
     def save_config(self):
-        config = configparser.ConfigParser()
-        default_settings = config['DEFAULT']
+        parser = configparser.ConfigParser()
+        default_settings = parser['DEFAULT']
         default_settings['ip'] = self.ip_address_input.get()
         default_settings['port'] = self.port_input.get()
-        bla = self.input_device_var.get()
         default_settings['audio_input_device_id'] = str(self.device_name_id_dict.get(self.input_device_var.get().lstrip('0123456789. ')))
         default_settings['audio_output_device_id'] = str(self.device_name_id_dict.get(self.output_device_var.get().lstrip('0123456789. ')))
-        with open('vojp_config.ini', 'w') as configfile:
-            config.write(configfile)
+        with open(Config.CONFIG_FILE, 'w') as configfile:
+            parser.write(configfile)
 
     def start_gui(self):
         self.frame.pack()
@@ -170,8 +170,8 @@ class Gui:
         ip = self.ip_address_input.get()
         port = int(self.port_input.get())
         debug_level = self.debug_level_var.get()
-        audio_input_device_id = self.device_name_id_dict.get(self.input_device_var.get())
-        audio_output_device_id = self.device_name_id_dict.get(self.output_device_var.get())
+        audio_input_device_id = self.device_name_id_dict.get(self.input_device_var.get().lstrip('0123456789. '))
+        audio_output_device_id = self.device_name_id_dict.get(self.output_device_var.get().lstrip('0123456789. '))
         input_sample_rate = self.input_sample_rate_var.get()
         output_sample_rate = self.output_sample_rate_var.get()
         start_server = self.start_server_var.get()

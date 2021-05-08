@@ -9,7 +9,8 @@ class Config(object):
     LOG_DIR = basedir + '/logs'
     WIN_DLL_DIR = basedir + '/windows_dll'
 
-    DATABASE_DIR = Path(basedir).parent.joinpath('database')
+    CONFIG_FILE = basedir + '/vojp_config.ini'
 
+    DATABASE_DIR = basedir + '/database'
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///' + os.path.join(DATABASE_DIR,
                                                                                             'vojp.db')
