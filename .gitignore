@@ -1,6 +1,7 @@
 # Custom additions
 recordings/
 logs/
+vojp/vojp_config.ini
 *.db
 
 # Byte-compiled / optimized / DLL files

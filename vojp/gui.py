@@ -29,7 +29,7 @@ class Gui:
         self.debug_level_select = ttk.OptionMenu(self.frame,
                                                  self.debug_level_var,
                                                  debug_level_options[0],
-                                                 *debug_level_options[1:])
+                                                 *debug_level_options)
 
         self.input_sample_rate_var = tk.IntVar(master=self.frame, name='input_sample_rate', value=48000)
         self.output_sample_rate_var = tk.IntVar(master=self.frame, name='output_sample_rate', value=48000)
@@ -39,13 +39,15 @@ class Gui:
         self.input_sample_rate_select = ttk.OptionMenu(self.frame,
                                                        self.input_sample_rate_var,
                                                        sample_rate_options[0],
-                                                       *sample_rate_options[1:])
+                                                       *sample_rate_options)
         self.output_sample_rate_select = ttk.OptionMenu(self.frame,
                                                         self.output_sample_rate_var,
                                                         sample_rate_options[0],
-                                                        *sample_rate_options[1:])
+                                                        *sample_rate_options)
 
         sound_devices = get_all_devices()
+        self.device_id_name_dict = {device['device_index']: device['name'] for device in sound_devices}
+        self.device_name_id_dict = {device['name']: device['device_index'] for device in sound_devices}
         input_devices = [str(sound_device['device_index']) + '. ' + sound_device['name'] for sound_device in
                          sound_devices if sound_device['max_input_channels'] > 0]
         output_devices = [str(sound_device['device_index']) + '. ' + sound_device['name'] for sound_device in
@@ -59,12 +61,12 @@ class Gui:
         self.input_device_select = ttk.OptionMenu(self.frame,
                                                   self.input_device_var,
                                                   input_devices[0],
-                                                  *tuple(input_devices))
+                                                  *input_devices)
 
         self.output_device_select = ttk.OptionMenu(self.frame,
                                                    self.output_device_var,
                                                    output_devices[0],
-                                                   *tuple(output_devices))
+                                                   *output_devices)
 
         self.connect_button = ttk.Button(master=self.frame, command=self.connect_client, text='Connect',
                                          width=10)
@@ -92,16 +94,17 @@ class Gui:
         default_settings = config['DEFAULT']
         self.ip_address_input.insert(0, default_settings['ip'])
         self.port_input.insert(0, default_settings['port'])
-        self.input_device_var.set(default_settings['audio_input_device_id'])
-        self.output_device_var.set(default_settings['audio_output_device_id'])
+        self.input_device_var.set(self.device_id_name_dict.get(int(default_settings['audio_input_device_id'])))
+        self.output_device_var.set(self.device_id_name_dict.get(int(default_settings['audio_output_device_id'])))
 
     def save_config(self):
         config = configparser.ConfigParser()
         default_settings = config['DEFAULT']
         default_settings['ip'] = self.ip_address_input.get()
         default_settings['port'] = self.port_input.get()
-        default_settings['audio_input_device_id'] = self.input_device_var.get()[0]
-        default_settings['audio_output_device_id'] = self.output_device_var.get()[0]
+        bla = self.input_device_var.get()
+        default_settings['audio_input_device_id'] = str(self.device_name_id_dict.get(self.input_device_var.get().lstrip('0123456789. ')))
+        default_settings['audio_output_device_id'] = str(self.device_name_id_dict.get(self.output_device_var.get().lstrip('0123456789. ')))
         with open('vojp_config.ini', 'w') as configfile:
             config.write(configfile)
 

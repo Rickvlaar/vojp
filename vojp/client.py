@@ -35,7 +35,7 @@ class UdpClient(asyncio.DatagramProtocol):
             file=Config.RECORDING_DIR + '/' + str(datetime.now()).replace(':', '_') + '.wav',
             mode='w',
             samplerate=output_sample_rate,
-            channels=1)
+            channels=1) if record_audio else None
         self.audio_udp_object = AudioUDPObject(sample_rate=self.input_sample_rate,
                                                frame_size=self.frame_size,
                                                sent_at=time.time_ns())
