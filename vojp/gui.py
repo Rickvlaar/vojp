@@ -36,11 +36,11 @@ class Gui:
 
         sample_rate_options = [48000, 32000, 16000, 12000, 8000]
 
-        self.input_sample_rate_select = ttk.OptionMenu(self.frame,
+        self.input_sample_rate_select = ttk.OptionMenu(self.right_frame,
                                                        self.input_sample_rate_var,
                                                        sample_rate_options[0],
                                                        *sample_rate_options)
-        self.output_sample_rate_select = ttk.OptionMenu(self.frame,
+        self.output_sample_rate_select = ttk.OptionMenu(self.right_frame,
                                                         self.output_sample_rate_var,
                                                         sample_rate_options[0],
                                                         *sample_rate_options)
@@ -53,39 +53,40 @@ class Gui:
         output_devices = [str(sound_device['device_index']) + '. ' + sound_device['name'] for sound_device in
                           sound_devices if sound_device['max_output_channels'] > 0]
 
-        self.input_device_var = tk.StringVar(master=self.frame,
+        self.input_device_var = tk.StringVar(master=self.right_frame,
                                              value=input_devices[0])
-        self.output_device_var = tk.StringVar(master=self.frame,
+        self.output_device_var = tk.StringVar(master=self.right_frame,
                                               value=output_devices[0])
 
-        self.input_device_select = ttk.OptionMenu(self.frame,
+        self.input_device_select = ttk.OptionMenu(self.right_frame,
                                                   self.input_device_var,
                                                   input_devices[0],
                                                   *input_devices)
 
-        self.output_device_select = ttk.OptionMenu(self.frame,
+        self.output_device_select = ttk.OptionMenu(self.right_frame,
                                                    self.output_device_var,
                                                    output_devices[0],
                                                    *output_devices)
 
+        self.packet_length = ttk.Entry(master=self.frame)
+        self.buffer_size = ttk.Entry(master=self.frame)
+
+        self.start_server_var = tk.BooleanVar(master=self.frame, value=False)
+        self.start_server_checkbox = ttk.Checkbutton(master=self.frame, text='start server',
+                                                     variable=self.start_server_var)
+        self.echo_mode_var = tk.BooleanVar(master=self.frame, value=False)
+        self.echo_mode_checkbox = ttk.Checkbutton(master=self.frame, text='echo mode',
+                                                  variable=self.echo_mode_var)
+
+        self.record_var = tk.BooleanVar(master=self.frame, value=False)
+        self.record_checkbox = ttk.Checkbutton(master=self.frame, text='record',
+                                               variable=self.record_var)
+
+        self.latency_var = tk.StringVar(master=self.frame, value=0)
+
         self.connect_button = ttk.Button(master=self.frame, command=self.connect_client, text='Connect',
                                          width=10)
 
-        self.packet_length = ttk.Entry(master=self.right_frame)
-        self.buffer_size = ttk.Entry(master=self.right_frame)
-
-        self.start_server_var = tk.BooleanVar(master=self.right_frame, value=False)
-        self.start_server_checkbox = ttk.Checkbutton(master=self.right_frame, text='start server',
-                                                     variable=self.start_server_var)
-        self.echo_mode_var = tk.BooleanVar(master=self.right_frame, value=False)
-        self.echo_mode_checkbox = ttk.Checkbutton(master=self.right_frame, text='echo mode',
-                                                  variable=self.echo_mode_var)
-
-        self.record_var = tk.BooleanVar(master=self.right_frame, value=False)
-        self.record_checkbox = ttk.Checkbutton(master=self.right_frame, text='record',
-                                               variable=self.record_var)
-
-        self.latency_var = tk.StringVar(master=self.right_frame, value=0)
         self.read_config()
 
     def read_config(self):
@@ -127,40 +128,40 @@ class Gui:
         debug_level_label.pack()
         self.debug_level_select.pack()
 
-        input_device_label = ttk.Label(master=self.frame, text='Select Input Device')
-        input_device_label.pack()
-        self.input_device_select.pack()
-
-        input_sample_rate_label = ttk.Label(master=self.frame, text='Select Input Sample Rate')
-        input_sample_rate_label.pack()
-        self.input_sample_rate_select.pack()
-
-        output_device_label = ttk.Label(master=self.frame, text='Select Output Device')
-        output_device_label.pack()
-        self.output_device_select.pack()
-
-        output_sample_rate_label = ttk.Label(master=self.frame, text='Select Output Sample Rate')
-        output_sample_rate_label.pack()
-        self.output_sample_rate_select.pack()
-
-        packet_length_label = ttk.Label(master=self.right_frame, text='Set Packet Length (ms)')
+        packet_length_label = ttk.Label(master=self.frame, text='Set Packet Length (ms)')
         packet_length_label.pack()
         self.packet_length.pack()
         self.packet_length.insert(0, '10')
 
-        buffer_size_label = ttk.Label(master=self.right_frame, text='Set Buffer Size (ms)')
+        buffer_size_label = ttk.Label(master=self.frame, text='Set Buffer Size (ms)')
         buffer_size_label.pack()
         self.buffer_size.pack()
         self.buffer_size.insert(0, '10')
 
-        self.connect_button.pack()
+        input_device_label = ttk.Label(master=self.right_frame, text='Select Input Device')
+        input_device_label.pack()
+        self.input_device_select.pack()
+
+        input_sample_rate_label = ttk.Label(master=self.right_frame, text='Select Input Sample Rate')
+        input_sample_rate_label.pack()
+        self.input_sample_rate_select.pack()
+
+        output_device_label = ttk.Label(master=self.right_frame, text='Select Output Device')
+        output_device_label.pack()
+        self.output_device_select.pack()
+
+        output_sample_rate_label = ttk.Label(master=self.right_frame, text='Select Output Sample Rate')
+        output_sample_rate_label.pack()
+        self.output_sample_rate_select.pack()
+
         self.start_server_checkbox.pack()
         self.echo_mode_checkbox.pack()
         self.record_checkbox.pack()
+        self.connect_button.pack()
 
-        latency_label = ttk.Label(master=self.right_frame, text='Latency (ms)')
+        latency_label = ttk.Label(master=self.frame, text='Latency (ms)')
         latency_label.pack()
-        latency_var = ttk.Label(master=self.right_frame, textvariable=self.latency_var)
+        latency_var = ttk.Label(master=self.frame, textvariable=self.latency_var)
         latency_var.pack()
 
         self.gui.mainloop()
