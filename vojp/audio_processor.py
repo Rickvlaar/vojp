@@ -4,8 +4,6 @@ import opuslib
 import logging
 import opuslib.api.encoder
 import opuslib.api.ctl
-import time
-import audioop
 import sounddevice as sd
 import numpy as np
 
@@ -68,14 +66,11 @@ class AudioProcessor:
                             latency='low',
                             dtype='int16'):
             while True:
-                # input_time_start = time.monotonic()
                 indata, status = await queue_in.get()
                 logging.debug(msg='Microphone input packet created')
 
                 yield indata, status
-                # input_time_end = time.monotonic()
-                # delta_time = input_time_end - input_time_start
-                # print('audio input time = ' + str(delta_time))
+
 
     async def convert_stream_to_opus(self):
         async for indata, status in self.get_mic_input():

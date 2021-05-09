@@ -2,7 +2,7 @@ import os
 import platform
 import logging
 import asyncio
-from database import util
+from database import util as db_util
 from vojp.config import Config
 from vojp import main
 
@@ -28,8 +28,8 @@ if platform.system() == 'Windows':
     os.add_dll_directory(Config.WIN_DLL_DIR)
 
 
-if not util.check_data_model():
-    util.create_data_model()
+if not db_util.check_data_model():
+    db_util.create_data_model()
 
 
 try:
