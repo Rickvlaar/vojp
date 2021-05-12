@@ -217,5 +217,5 @@ class Gui:
                 logging.debug(msg='Gui update finished')
                 await asyncio.sleep(0.1)
             except:
-                from vojp.main import shutdown
+                from main import shutdown
                 await shutdown()

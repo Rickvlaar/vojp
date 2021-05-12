@@ -1,7 +1,4 @@
-import unittest
+import sys
 
-
-class TestClientLogic(unittest.TestCase):
-
-    def test_stream_sync(self):
-        client = 'whatever'
+print('hello from python')
+sys.stdout.flush()

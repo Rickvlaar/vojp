@@ -1,0 +1,36 @@
+body {
+    font-family: hack, menlo, monospace;
+    color: #ABB2BF;
+}
+
+p {
+    font-family: hack, menlo, monospace;
+    color: #ABB2BF;
+}
+
+h1 {
+    font-family: hack, menlo, monospace;
+    color: #56B6C2;
+}
+
+.vojp_text {
+    font-family: hack, menlo, monospace;
+    color: #ABB2BF;
+}
+
+.vojp_input {
+    background-color: #282C34 !important;
+    color: #D19A66 !important;
+}
+
+.vojp_input_label {
+    background-color: #282C34 !important;
+    color: #FF8C00 !important;
+}
+
+.vojp_switch {
+    background-color: #ABB2BF !important;
+    color: #D19A66 !important;
+}
+
+

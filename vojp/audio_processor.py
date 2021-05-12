@@ -1,7 +1,7 @@
 import queue
 import asyncio
-import opuslib
 import logging
+import opuslib
 import opuslib.api.encoder
 import opuslib.api.ctl
 import sounddevice as sd
