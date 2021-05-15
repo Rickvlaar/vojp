@@ -1,4 +1,4 @@
-const {app, webContents, BrowserWindow, Menu} = require('electron')
+const {app, ipcMain, webContents, BrowserWindow, Menu} = require('electron')
 const path = require('path')
 const vojp = require('./vojp_interface')
 const inputTemplates = require('./templates/input_templates')
@@ -12,7 +12,9 @@ function createWindow() {
         hasShadow: true,
         backgroundColor: '#282C34',
         webPreferences: {
-            preload: path.join(__dirname, 'preload.js')
+            preload: path.join(__dirname, 'preload.js'),
+            // nodeIntegration: true,
+            // contextIsolation: false
         }
     })
 
@@ -48,24 +50,24 @@ function createMenu() {
     Menu.setApplicationMenu(menu)
 }
 
+app.commandLine.appendSwitch('remote-debugging-port', '9222')
+
 app.whenReady().then(() => {
     let mainWin = createWindow()
     createMenu()
     const vojpSettings = vojp.getVojpSettings()
 
-    let generatedInputs = []
     Object.entries(vojpSettings).forEach((setting) => {
         if (setting[1].input_type === 'datalist') {
-            generatedInputs.push(inputTemplates.datalist(setting[0], setting[1].options, setting[1].default))
+            setting[1].htmlString = inputTemplates.datalist(setting[0], setting[1].options, setting[1].default)
         } else if (setting[1].input_type === 'input') {
-            generatedInputs.push(inputTemplates.textInput(setting[0], setting[1].default))
+            setting[1].htmlString = inputTemplates.textInput(setting[0], setting[1].default)
         } else if (setting[1].input_type === 'checkbox') {
-            generatedInputs.push(inputTemplates.checkboxInput(setting[0], setting[1].default))
+            setting[1].htmlString = inputTemplates.checkboxInput(setting[0], setting[1].default)
         }
     })
 
-    mainWin.webContents.send('new_settings', generatedInputs)
-
+    mainWin.webContents.send('new_settings', vojpSettings)
 
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {
@@ -74,6 +76,12 @@ app.whenReady().then(() => {
     })
 
 })
+
+ipcMain.on('connect-to-vojp', (event, settings) => {
+        console.log('connecting to backend')
+        vojp.startVojp(settings)
+    }
+)
 
 app.on('window-all-closed', () => {
     // if (process.platform !== 'darwin') {

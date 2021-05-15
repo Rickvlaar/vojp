@@ -6,6 +6,7 @@ import opuslib.api.encoder
 import opuslib.api.ctl
 import sounddevice as sd
 import numpy as np
+import time
 
 
 class AudioProcessor:
@@ -70,7 +71,6 @@ class AudioProcessor:
                 logging.debug(msg='Microphone input packet created')
 
                 yield indata, status
-
 
     async def convert_stream_to_opus(self):
         async for indata, status in self.get_mic_input():
