@@ -1,19 +1,25 @@
 const {spawn, execSync} = require('child_process');
-const {path} = require('path')
+const path = require('path')
+
+const vojpPath = path.join(__dirname, '../')
+const commandPath =  path.normalize('venv/bin/python')
+
 
 module.exports = {
-
     getVojpSettings: function () {
-        const vojpSettings = execSync('venv/bin/python vojp_cli.py -s', {
-                cwd: '/Users/rickforce/PycharmProjects/vojp'
+        const vojpSettings = execSync(commandPath + ' vojp_cli.py -s', {
+                cwd: vojpPath
             })
         return JSON.parse(vojpSettings.toString())
     },
 
     startVojp: function (settings) {
+        let vojpPath = path.join(__dirname, '../')
+        let commandPath =  path.normalize('venv/bin/python')
+
         const jsonSettings = JSON.stringify(settings)
-        const vojp = spawn('venv/bin/python', ['main.py', '-s', jsonSettings], {
-            cwd: '/Users/rickforce/PycharmProjects/vojp/'
+        const vojp = spawn(commandPath, ['main.py', '-s', jsonSettings], {
+            cwd: vojpPath
         })
 
         vojp.on("error", function (error) {
