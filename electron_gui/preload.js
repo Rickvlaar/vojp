@@ -23,6 +23,10 @@ ipcRenderer.on('new_settings', (event, settings) => {
     document.getElementById('session-settings').insertAdjacentElement("beforeend", sessionSettingsDiv)
 })
 
+ipcRenderer.on('update_latency', (event, latency) => {
+    document.getElementById('latency').innerHTML = latency
+})
+
 window.addEventListener('DOMContentLoaded', () => {
     const closeButton = document.getElementById('close-vojp-button')
     closeButton.addEventListener('click', () => {

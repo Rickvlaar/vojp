@@ -24,9 +24,9 @@ async def main():
         sys.stdout.flush()
     else:
         vojp_settings = {'ip_address': '127.0.0.1', 'port': '5000', 'packet_length': '10', 'buffer_size': '10',
-                         'host_server': 'true', 'echo_mode': 'true', 'record': 'false', 'debug_level': 'INFO',
-                         'input_sample_rate': '48000', 'output_sample_rate': '48000', 'input_device': '4',
-                         'output_device': '3'}
+                         'host_server': 'true', 'echo_mode': 'true', 'record': 'false', 'debug_level': 'DEBUG',
+                         'input_sample_rate': '48000', 'output_sample_rate': '48000', 'input_device': '0',
+                         'output_device': '1'}
 
     # start event loop
     await start_vojp(vojp_settings)
@@ -73,8 +73,9 @@ def setup_logger():
                         level=logging.DEBUG)
 
 
-try:
-    asyncio.run(main(), debug=False)
-except:
-    logging.info(msg='Asyncio event loop has been stopped successfully')
-    logging.exception(msg='Asyncio event loop has been stopped successfully')
+if __name__ == '__main__':
+    try:
+        asyncio.run(main(), debug=False)
+    except:
+        logging.info(msg='Asyncio event loop has been stopped successfully')
+        logging.exception(msg='Asyncio event loop has been stopped successfully')

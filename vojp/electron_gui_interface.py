@@ -1,16 +1,14 @@
 import json
-import argparse
-import sys
-import audio_processor
 import configparser
-from config import Config
+from vojp.audio_processor import get_all_devices
+from vojp.config import Config
 
 
 class ElectronGuiSettings:
     debug_level_options = {value: value for value in ['INFO', 'DEBUG']}
     sample_rate_options = {value: value for value in [48000, 32000, 16000, 12000, 8000]}
-    input_devices_dict = {device['device_index']: device['name'] for device in audio_processor.get_all_devices() if device['max_input_channels'] > 0}
-    output_devices_dict = {device['device_index']: device['name'] for device in audio_processor.get_all_devices() if device['max_output_channels'] > 0}
+    input_devices_dict = {device['device_index']: device['name'] for device in get_all_devices() if device['max_input_channels'] > 0}
+    output_devices_dict = {device['device_index']: device['name'] for device in get_all_devices() if device['max_output_channels'] > 0}
 
     def __init__(self):
         self.ip_address = self.Setting(input_type='input', setting_type='connection')
@@ -60,16 +58,3 @@ class ElectronGuiSettings:
 
         def to_json(self):
             return json.dumps({key: value for key, value in self.__dict__.items()})
-
-
-cli_parser = argparse.ArgumentParser(prog='gui')
-cli_parser.add_argument('-s', '--settings', help='returns default vojp settings', action='store_true')
-
-args = cli_parser.parse_args()
-if args.settings:
-    print(ElectronGuiSettings().to_json())
-    sys.stdout.flush()
-
-
-
-

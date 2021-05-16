@@ -6,7 +6,7 @@ import opuslib.api.encoder
 import opuslib.api.ctl
 import sounddevice as sd
 import numpy as np
-import time
+from vojp.objects import AudioUDPObject
 
 
 class AudioProcessor:
@@ -46,6 +46,7 @@ class AudioProcessor:
         self.input_buffer = queue.Queue()
         self.output_buffer = list()
         self.max_buffer_size = 0.05 / packet_length  # allow a buffer size of 50ms
+        self.end_to_end_latency = None
 
         if audio_input_device_id != 'default':
             sd.default.device[0] = int(audio_input_device_id)
@@ -58,7 +59,10 @@ class AudioProcessor:
 
         def process_input_stream(indata, frame_count, time_info, status):
             raw_indata = indata.copy().tobytes()
-            loop.call_soon_threadsafe(queue_in.put_nowait, (raw_indata, status))
+            new_audio_object = AudioUDPObject(sample_rate=self.input_sample_rate,
+                                              frame_size=self.frame_size,
+                                              audio_packet=raw_indata)
+            loop.call_soon_threadsafe(queue_in.put_nowait, new_audio_object)
 
         with sd.InputStream(callback=process_input_stream,
                             samplerate=self.input_sample_rate,
@@ -67,16 +71,17 @@ class AudioProcessor:
                             latency='low',
                             dtype='int16'):
             while True:
-                indata, status = await queue_in.get()
+                audio_object = await queue_in.get()
                 logging.debug(msg='Microphone input packet created')
 
-                yield indata, status
+                yield audio_object
 
     async def convert_stream_to_opus(self):
-        async for indata, status in self.get_mic_input():
+        async for audio_object in self.get_mic_input():
             logging.debug(msg='Converting microphone audio packet to opus')
-            audio_frame = self.opus_encoder.encode(pcm_data=indata, frame_size=self.frame_size)
-            yield audio_frame
+            audio_frame = self.opus_encoder.encode(pcm_data=audio_object.audio_packet, frame_size=self.frame_size)
+            audio_object.audio_packet = audio_frame
+            yield audio_object
 
     async def convert_opus_to_stream(self, opus_decoder, opus_data):
         return opus_decoder.decode(opus_data=opus_data, frame_size=self.frame_size)
@@ -104,13 +109,12 @@ class AudioProcessor:
 
         with output_stream:
             while True:
-                # input_time_start = time.monotonic()
-                audio_packet = await audio_stream.get()
-                self.output_buffer.append(audio_packet)
+                audio_object = await audio_stream.get()
+                self.output_buffer.append(audio_object.audio_packet)
+                audio_object.determine_e2e_latency()
+                self.end_to_end_latency = audio_object.end_to_end_latency
+                logging.debug(msg='Current e2e latency  ' + str(audio_object.end_to_end_latency + 10) + ' ms')
                 logging.debug(msg='Outputting audio packet. Current buffersize is ' + str(len(self.output_buffer)))
-                # input_time_end = time.monotonic()
-                # delta_time = input_time_end - input_time_start
-                # print('output time = ' + str(delta_time))
 
     def get_buffer_size(self):
         return len(self.output_buffer)

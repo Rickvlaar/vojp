@@ -7,6 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron ."
   },
+  "bin": {
+    "vojp-gui": "./vojp_interface.js"
+  },
   "keywords": [],
   "author": "RickForce",
   "license": "ISC",
@@ -15,6 +18,8 @@
     "electron": "^12.0.7",
     "jquery": "^3.5.1",
     "popper.js": "^2.0.0-next.4",
-    "sass": "^1.32.12"
+    "sass": "^1.32.12",
+    "socket.io": "^4.1.1",
+    "socket.io-client": "^4.1.1"
   }
 }

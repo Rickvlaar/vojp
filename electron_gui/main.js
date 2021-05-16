@@ -2,6 +2,7 @@ const {app, ipcMain, webContents, BrowserWindow, Menu} = require('electron')
 const path = require('path')
 const vojp = require('./vojp_interface')
 const inputTemplates = require('./templates/input_templates')
+const net = require('net')
 
 function createWindow() {
     const win = new BrowserWindow({
@@ -68,6 +69,27 @@ app.whenReady().then(() => {
     })
 
     mainWin.webContents.send('new_settings', vojpSettings)
+
+    const server = net.createServer((socket) => {
+        socket.on('data', (data) => {
+            let latency = data.toString('utf8')
+            mainWin.webContents.send('update_latency', latency)
+        })
+    }).on('error', (err) => {
+        // Handle errors here.
+        throw err;
+    }).on('connection', () => {
+        console.log('vojp backend connected');
+    }).on('listening', () =>{
+        console.log('listener running');
+    })
+
+    server.listen({
+        host: '127.0.0.1',
+        port: 1337,
+        exclusive: true
+    });
+
 
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {
