@@ -110,7 +110,7 @@ class UdpClient(asyncio.DatagramProtocol):
             logging.debug(msg='Syncing client audio streams')
             await asyncio.sleep(wait_time)  # reduce cpu usage and free up thread
             audio_object = await self.read_audio_output_buffer()
-            if self.record_audio:
+            if self.record_audio and audio_object and audio_object.audio_packet:
                 await self.record_audio_stream(audio_object.audio_packet)
             logging.debug(msg='Sync finished')
 

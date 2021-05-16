@@ -5,12 +5,13 @@ import json
 import sys
 from vojp.client import UdpClient
 from vojp.server import AsyncUdpServer
-from vojp.config import Config
+from vojp.config import Config, setup_environment
 from vojp.electron_gui_interface import ElectronGuiSettings
 from datetime import datetime
 
 
 async def main():
+    setup_environment()
     setup_logger()
 
     cli_parser = argparse.ArgumentParser(prog='main')
