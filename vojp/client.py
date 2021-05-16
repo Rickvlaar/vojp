@@ -47,12 +47,18 @@ class UdpClient(asyncio.DatagramProtocol):
         self.transport, self.protocol = await loop.create_datagram_endpoint(
                 protocol_factory=lambda: self,
                 remote_addr=self.server_address)
-        self.gui_socket_connection, _ = await loop.create_connection(
+        try:
+            self.gui_socket_connection, _ = await loop.create_connection(
                 protocol_factory=lambda: self,
                 host='127.0.0.1',
                 port=1337)
+        except ConnectionError:
+            logging.warning(msg='Unable to connect to Electron GUI socket')
+            pass
+
         await asyncio.gather(self.stream_mic_input(),
-                             self.output_audio())
+                             self.output_audio(),
+                             self.update_gui())
 
     def datagram_received(self, data, addr):
         """
@@ -99,31 +105,39 @@ class UdpClient(asyncio.DatagramProtocol):
 
     async def sync_streams(self):
         logging.info(msg='Starting client audio stream sync coroutine')
-        # await asyncio.create_task(self.new_client_event.wait())  # release the loop while waiting for clients
         wait_time = self.packet_length * 0.1
         while True:
-            await asyncio.sleep(wait_time)  # reduce cpu usage and free up thread
             logging.debug(msg='Syncing client audio streams')
-            if self.audio_processor.get_buffer_size() < self.max_buffer_size:
-                combined_fragment = None
-                for client in self.logged_in_clients.values():
-                    if len(client.decoded_audio_object_queue) > 0:
-                        audio_object = client.decoded_audio_object_queue.pop(0)
-                        if combined_fragment is None:
-                            combined_fragment = audio_object.audio_packet
-                        combined_fragment = audioop.add(combined_fragment, audio_object.audio_packet, 2)
-                    if len(client.decoded_audio_object_queue) > 5:
-                        logging.warning(msg='Buffer overload. Skipping packet. Buffer size is ' + str(
-                                len(client.decoded_audio_object_queue)))
-                        client.decoded_audio_object_queue.pop(0)
-                if combined_fragment:
-                    audio_object.audio_packet = combined_fragment
-                    self.audio_output_buffer.put_nowait(audio_object)
-                    if self.record_audio:
-                        await self.record_audio_stream(audio_object.audio_packet)
-            if self.audio_processor.end_to_end_latency:
-                self.gui_socket_connection.write(bytes(str(self.audio_processor.end_to_end_latency), 'utf-8'))
+            await asyncio.sleep(wait_time)  # reduce cpu usage and free up thread
+            audio_object = await self.read_audio_output_buffer()
+            if self.record_audio:
+                await self.record_audio_stream(audio_object.audio_packet)
             logging.debug(msg='Sync finished')
+
+    async def update_gui(self):
+        while True:
+            await asyncio.sleep(0.1)
+            if self.audio_processor.end_to_end_latency and self.gui_socket_connection:
+                self.gui_socket_connection.write(bytes(str(self.audio_processor.end_to_end_latency), 'utf-8'))
+
+    async def read_audio_output_buffer(self):
+        combined_fragment = None
+        audio_object = None
+        if self.audio_processor.get_buffer_size() < self.max_buffer_size:
+            for client in self.logged_in_clients.values():
+                if len(client.decoded_audio_object_queue) > 0:
+                    audio_object = client.decoded_audio_object_queue.pop(0)
+                    if combined_fragment is None:
+                        combined_fragment = audio_object.audio_packet
+                    combined_fragment = audioop.add(combined_fragment, audio_object.audio_packet, 2)
+                if len(client.decoded_audio_object_queue) > 5:
+                    logging.warning(msg='Buffer overload. Skipping packet. Buffer size is ' + str(
+                            len(client.decoded_audio_object_queue)))
+                    client.decoded_audio_object_queue.pop(0)
+            if combined_fragment:
+                audio_object.audio_packet = combined_fragment
+                self.audio_output_buffer.put_nowait(audio_object)
+        return audio_object
 
     async def output_audio(self):
         logging.info(msg='Starting audio output coroutines')

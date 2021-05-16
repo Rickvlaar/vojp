@@ -60,11 +60,11 @@ app.whenReady().then(() => {
 
     Object.entries(vojpSettings).forEach((setting) => {
         if (setting[1].input_type === 'datalist') {
-            setting[1].htmlString = inputTemplates.datalist(setting[0], setting[1].options, setting[1].default)
+            setting[1].htmlString = inputTemplates.datalist(setting[0], setting[1].options, setting[1].value)
         } else if (setting[1].input_type === 'input') {
-            setting[1].htmlString = inputTemplates.textInput(setting[0], setting[1].default)
+            setting[1].htmlString = inputTemplates.textInput(setting[0], setting[1].value)
         } else if (setting[1].input_type === 'checkbox') {
-            setting[1].htmlString = inputTemplates.checkboxInput(setting[0], setting[1].default)
+            setting[1].htmlString = inputTemplates.checkboxInput(setting[0], setting[1].value)
         }
     })
 
@@ -89,7 +89,7 @@ app.whenReady().then(() => {
         port: 1337,
         exclusive: true
     });
-
+    app.server = server
 
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {
@@ -106,7 +106,6 @@ ipcMain.on('connect-to-vojp', (event, settings) => {
 )
 
 app.on('window-all-closed', () => {
-    // if (process.platform !== 'darwin') {
+    app.server.close()
     app.quit()
-    // }
 })

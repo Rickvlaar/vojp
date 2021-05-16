@@ -12,49 +12,59 @@ class ElectronGuiSettings:
 
     def __init__(self):
         self.ip_address = self.Setting(input_type='input', setting_type='connection')
-        self.port = self.Setting(input_type='input', setting_type='connection', default=5000)
-        self.input_sample_rate = self.Setting(input_type='datalist', setting_type='device', options=self.sample_rate_options, default=[48000, 48000])
-        self.output_sample_rate = self.Setting(input_type='datalist', setting_type='device', options=self.sample_rate_options, default=[48000, 48000])
-        self.debug_level = self.Setting(input_type='datalist', setting_type='connection', options=self.debug_level_options, default=['INFO', 'INFO'])
+        self.port = self.Setting(input_type='input', setting_type='connection', value=5000)
+        self.input_sample_rate = self.Setting(input_type='datalist', setting_type='device', options=self.sample_rate_options, value=[48000, 48000])
+        self.output_sample_rate = self.Setting(input_type='datalist', setting_type='device', options=self.sample_rate_options, value=[48000, 48000])
+        self.debug_level = self.Setting(input_type='datalist', setting_type='connection', options=self.debug_level_options, value=['INFO', 'INFO'])
         self.input_device = self.Setting(input_type='datalist', setting_type='device', options=self.input_devices_dict)
         self.output_device = self.Setting(input_type='datalist', setting_type='device',  options=self.output_devices_dict)
-        self.packet_length = self.Setting(input_type='input', setting_type='connection', default=10)
-        self.buffer_size = self.Setting(input_type='input', setting_type='connection', default=10)
-        self.host_server = self.Setting(input_type='checkbox', setting_type='session', default=False)
-        self.echo_mode = self.Setting(input_type='checkbox', setting_type='session', default=False)
-        self.record = self.Setting(input_type='checkbox', setting_type='session', default=False)
-        self.read_config()
+        self.packet_length = self.Setting(input_type='input', setting_type='connection', value=10)
+        self.buffer_size = self.Setting(input_type='input', setting_type='connection', value=10)
+        self.host_server = self.Setting(input_type='checkbox', setting_type='session', value=False)
+        self.echo_mode = self.Setting(input_type='checkbox', setting_type='session', value=False)
+        self.record = self.Setting(input_type='checkbox', setting_type='session', value=False)
+        self.read_config_ini()
 
-    def read_config(self):
+    def read_config_ini(self):
         parser = configparser.ConfigParser()
         parser.read(Config.CONFIG_FILE)
         default_settings = parser['DEFAULT']
-        self.ip_address.default = default_settings.get('ip')
-        self.port.default = default_settings.get('port') if default_settings.get('port') else 5000
-        self.input_device.default = [default_settings['audio_input_device_id'], self.input_devices_dict.get(int(default_settings['audio_input_device_id']))]
-        self.output_device.default = [default_settings['audio_input_device_id'], self.output_devices_dict.get(int(default_settings['audio_output_device_id']))]
+        self.ip_address.value = default_settings.get('ip_address')
+        self.port.value = default_settings.get('port') if default_settings.get('port') else 5000
+        self.input_device.value = [default_settings['input_device'], self.input_devices_dict.get(int(default_settings['input_device']))]
+        self.output_device.value = [default_settings['output_device'], self.output_devices_dict.get(int(default_settings['output_device']))]
 
-    # def save_config(self):
-    #     parser = configparser.ConfigParser()
-    #     default_settings = parser['DEFAULT']
-    #     default_settings['ip'] = self.ip_address_input.get()
-    #     default_settings['port'] = self.port_input.get()
-    #     default_settings['audio_input_device_id'] = str(
-    #         self.device_name_id_dict.get(self.input_device_var.get().lstrip('0123456789. ')))
-    #     default_settings['audio_output_device_id'] = str(
-    #         self.device_name_id_dict.get(self.output_device_var.get().lstrip('0123456789. ')))
-    #     with open(Config.CONFIG_FILE, 'w') as configfile:
-    #         parser.write(configfile)
+    def save_config_ini(self):
+        parser = configparser.ConfigParser()
+        default_settings = parser['DEFAULT']
+        for setting_name, setting in self.__dict__.items():
+            default_settings[setting_name] = str(setting.value)
+        with open(Config.CONFIG_FILE, 'w') as configfile:
+            parser.write(configfile)
 
     def to_json(self):
         return json.dumps({key: value.__dict__ for key, value in self.__dict__.items()})
 
+    def read_from_electron(self, json_string):
+        settings_dict = json.loads(json_string)
+        for setting_name, setting in self.__dict__.items():
+            setting_value = settings_dict.get(setting_name)
+            if setting_value.isdigit():
+                setting.value = int(setting_value)
+            elif setting_value == 'true':
+                setting.value = True
+            elif setting_value == 'false':
+                setting.value = False
+            else:
+                setting.value = setting_value
+        return settings_dict
+
     class Setting:
-        def __init__(self, input_type, setting_type, options=None, default=None):
+        def __init__(self, input_type, setting_type, options=None, value=None):
             self.input_type = input_type
             self.setting_type = setting_type
             self.options = options
-            self.default = default
+            self.value = value
 
         def to_json(self):
             return json.dumps({key: value for key, value in self.__dict__.items()})
