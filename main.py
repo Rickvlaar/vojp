@@ -73,13 +73,9 @@ async def shutdown():
 
 
 def setup_logger():
-    # Remove all handlers associated with the root logger object.
-    for handler in logging.root.handlers[:]:
-        logging.root.removeHandler(handler)
-
     logging.basicConfig(filename=Config.LOG_DIR + '/voip_' + str(datetime.now()).replace(':', '_') + '.log',
                         format='%(asctime)s  %(levelname)s:%(message)s',
-                        level=logging.DEBUG)
+                        level=logging.DEBUG, force=True)
 
 
 if __name__ == '__main__':
