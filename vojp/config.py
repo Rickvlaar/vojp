@@ -1,5 +1,5 @@
 import os
-from pathlib import Path
+import platform
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -17,8 +17,6 @@ class Config(object):
 
 
 def setup_environment():
-    import os
-    import platform
     from database import util as db_util
 
     if os.path.exists(Config.RECORDING_DIR):
