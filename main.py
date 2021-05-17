@@ -21,15 +21,15 @@ async def main():
     vojp_settings = ElectronGuiSettings()
     if args.settings:
         vojp_settings.read_from_electron(args.settings)
-        logging.info(msg='settings received: ' + str(vojp_settings))
+        logging.info(msg='settings received: ' + args.settings)
         print('settings received: ' + args.settings + '\n starting vojp')
         sys.stdout.flush()
     else:
         test_settings = json.dumps(
                 {'ip_address'       : '127.0.0.1', 'port': '5000', 'packet_length': '10', 'buffer_size': '10',
                  'host_server'      : 'true', 'echo_mode': 'true', 'record': 'false', 'debug_level': 'DEBUG',
-                 'input_sample_rate': '48000', 'output_sample_rate': '48000', 'input_device': '0',
-                 'output_device'    : '1'})
+                 'input_sample_rate': '48000', 'output_sample_rate': '48000', 'input_device': '1',
+                 'output_device'    : '0'})
         vojp_settings.read_from_electron(test_settings)
     vojp_settings.save_config_ini()
 

@@ -5,7 +5,6 @@ import opuslib
 import opuslib.api.encoder
 import opuslib.api.ctl
 import sounddevice as sd
-import numpy as np
 from vojp.objects import AudioUDPObject
 
 
@@ -64,12 +63,14 @@ class AudioProcessor:
                                               audio_packet=raw_indata)
             loop.call_soon_threadsafe(queue_in.put_nowait, new_audio_object)
 
-        with sd.InputStream(callback=process_input_stream,
-                            samplerate=self.input_sample_rate,
-                            channels=self.channels,
-                            blocksize=self.frame_size,
-                            latency='low',
-                            dtype='int16'):
+        input_stream = sd.InputStream(callback=process_input_stream,
+                                      samplerate=self.input_sample_rate,
+                                      channels=self.channels,
+                                      blocksize=self.frame_size,
+                                      latency='low',
+                                      dtype='int16')
+
+        with input_stream:
             while True:
                 audio_object = await queue_in.get()
                 logging.debug(msg='Microphone input packet created')
@@ -130,7 +131,6 @@ def set_default_device():
 
 def get_all_devices():
     sound_devices = sd.query_devices()
-    logging.info(msg='Audio devices available on system:\n' + str(sound_devices))
     for index, device in enumerate(sound_devices):
         device['device_index'] = index
     return sound_devices

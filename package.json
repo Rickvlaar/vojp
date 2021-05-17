@@ -1,0 +1,60 @@
+{
+  "productName":"vojp",
+  "name": "vojp",
+  "version": "0.0.1",
+  "description": "vojp",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron .",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "make-win": "electron-forge make --platform win32"
+  },
+  "bin": {
+    "vojp-gui": "./vojp_interface.js"
+  },
+  "keywords": [],
+  "author": "RickForce",
+  "license": "ISC",
+  "devDependencies": {
+    "@electron-forge/cli": "^6.0.0-beta.54",
+    "@electron-forge/maker-deb": "^6.0.0-beta.54",
+    "@electron-forge/maker-rpm": "^6.0.0-beta.54",
+    "@electron-forge/maker-squirrel": "^6.0.0-beta.54",
+    "@electron-forge/maker-zip": "^6.0.0-beta.54",
+    "bootstrap": "^5.0.0",
+    "electron": "^12.0.7",
+    "jquery": "^3.5.1",
+    "popper.js": "^2.0.0-next.4",
+    "sass": "^1.32.12",
+    "socket.io": "^4.1.1",
+    "socket.io-client": "^4.1.1"
+  },
+  "dependencies": {
+    "electron-squirrel-startup": "^1.0.0"
+  },
+  "config": {
+    "forge": {
+      "packagerConfig": {
+        "ignore": [
+          "__pycache__",
+          ".idea",
+          "build",
+          "dist"
+        ]
+      },
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "vojp"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-zip"
+        }
+      ]
+    }
+  }
+}

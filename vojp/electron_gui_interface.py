@@ -1,5 +1,6 @@
 import json
 import configparser
+import logging
 from vojp.audio_processor import get_all_devices
 from vojp.config import Config
 
@@ -7,8 +8,9 @@ from vojp.config import Config
 class ElectronGuiSettings:
     debug_level_options = {value: value for value in ['INFO', 'DEBUG']}
     sample_rate_options = {value: value for value in [48000, 32000, 16000, 12000, 8000]}
-    input_devices_dict = {device['device_index']: device['name'] for device in get_all_devices() if device['max_input_channels'] > 0}
-    output_devices_dict = {device['device_index']: device['name'] for device in get_all_devices() if device['max_output_channels'] > 0}
+    all_devices = get_all_devices()
+    input_devices_dict = {device['device_index']: device['name'] for device in all_devices if device['max_input_channels'] > 0}
+    output_devices_dict = {device['device_index']: device['name'] for device in all_devices if device['max_output_channels'] > 0}
 
     def __init__(self):
         self.ip_address = self.Setting(input_type='input', setting_type='connection')
@@ -24,6 +26,7 @@ class ElectronGuiSettings:
         self.echo_mode = self.Setting(input_type='checkbox', setting_type='session', value=False)
         self.record = self.Setting(input_type='checkbox', setting_type='session', value=False)
         self.read_config_ini()
+        self.log_devices()
 
     def read_config_ini(self):
         parser = configparser.ConfigParser()
@@ -59,6 +62,12 @@ class ElectronGuiSettings:
                 setting.value = setting_value
         return settings_dict
 
+    def log_devices(self):
+        logging.info(msg='Available devices:\n' + str(self.all_devices))
+
+    def __repr__(self):
+        return str({key: value for key, value in self.__dict__.items()})
+
     class Setting:
         def __init__(self, input_type, setting_type, options=None, value=None):
             self.input_type = input_type
@@ -68,3 +77,6 @@ class ElectronGuiSettings:
 
         def to_json(self):
             return json.dumps({key: value for key, value in self.__dict__.items()})
+
+        def __repr__(self):
+            return str({key: value for key, value in self.__dict__.items()})

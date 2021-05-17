@@ -1,6 +1,8 @@
 # Custom additions
 recordings/
 logs/
+node_modules
+out
 vojp/vojp_config.ini
 *.db
 
