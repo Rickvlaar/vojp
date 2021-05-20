@@ -1,4 +1,4 @@
-from vojp.electron_gui_interface import ElectronGuiSettings
+from electron_gui_interface import ElectronGuiSettings
 import sys
 import argparse
 

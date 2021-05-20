@@ -14,7 +14,7 @@ if (os.type() !== 'Darwin') {
 
 module.exports = {
     getVojpSettings: function () {
-        const vojpSettings = execSync(commandPath + ' vojp_cli.py -s', {
+        const vojpSettings = execSync(commandPath + ' vojp/vojp_cli.py -s', {
             cwd: vojpPath
         })
         return JSON.parse(vojpSettings.toString())
@@ -22,7 +22,7 @@ module.exports = {
 
     startVojp: function (settings) {
         const jsonSettings = JSON.stringify(settings)
-        const vojp = spawn(commandPath, ['main.py', '-s', jsonSettings], {
+        const vojp = spawn(commandPath, ['vojp/main.py', '-s', jsonSettings], {
             cwd: vojpPath
         })
         vojp.stdout.on('data', function (data) {

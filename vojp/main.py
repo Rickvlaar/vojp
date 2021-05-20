@@ -3,10 +3,10 @@ import logging
 import argparse
 import json
 import sys
-from vojp.client import UdpClient
-from vojp.server import AsyncUdpServer
-from vojp.config import Config, setup_environment
-from vojp.electron_gui_interface import ElectronGuiSettings
+from client import UdpClient
+from server import AsyncUdpServer
+from config import Config, setup_environment
+from electron_gui_interface import ElectronGuiSettings
 from datetime import datetime
 
 

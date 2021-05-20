@@ -1,4 +1,3 @@
-import inspect
 from database import data_model, engine, Base
 
 

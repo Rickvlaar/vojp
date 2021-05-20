@@ -37,6 +37,7 @@
   "config": {
     "forge": {
       "packagerConfig": {
+        "name": "vojp-win32-x64",
         "ignore": [
           "__pycache__",
           ".idea",
@@ -46,10 +47,7 @@
       },
       "makers": [
         {
-          "name": "@electron-forge/maker-squirrel",
-          "config": {
-            "name": "vojp"
-          }
+          "name": "@electron-forge/maker-squirrel"
         },
         {
           "name": "@electron-forge/maker-zip"

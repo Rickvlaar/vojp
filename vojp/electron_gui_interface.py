@@ -1,8 +1,8 @@
 import json
 import configparser
 import logging
-from vojp.audio_processor import get_all_devices
-from vojp.config import Config
+from audio_processor import get_all_devices
+from config import Config
 
 
 class ElectronGuiSettings:

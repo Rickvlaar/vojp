@@ -1,7 +1,5 @@
 FROM ubuntu:latest
 
-WORKDIR ~
-
 # Without interactive dialogue
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -11,7 +9,7 @@ RUN apt-get install -y wget gnupg2 software-properties-common git apt-utils vim 
 
 # Installing NVM, NodeJS and NPM
 RUN wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.37.2/install.sh | bash
-ENV NODE_VERSION=11
+ENV NODE_VERSION=16
 RUN . $HOME/.nvm/nvm.sh && nvm install $NODE_VERSION && nvm alias default $NODE_VERSION && nvm use default
 
 # Install Wine from WineHQ Repository
@@ -27,7 +25,3 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E03280
 RUN sh -c 'echo "deb https://download.mono-project.com/repo/ubuntu stable-bionic main" > /etc/apt/sources.list.d/mono-official-stable.list'
 RUN apt-get update
 RUN apt-get install -y mono-complete
-
-RUN PROJECT_DIR=/root/project
-
-WORKDIR $PROJECT_DIR

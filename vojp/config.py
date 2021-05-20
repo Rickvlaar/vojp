@@ -17,7 +17,7 @@ class Config(object):
 
 
 def setup_environment():
-    from database import util as db_util
+    # from database import util as db_util
 
     if os.path.exists(Config.RECORDING_DIR):
         pass
@@ -37,5 +37,5 @@ def setup_environment():
     if platform.system() == 'Windows':
         os.add_dll_directory(Config.WIN_DLL_DIR)
 
-    if not db_util.check_data_model():
-        db_util.create_data_model()
+    # if not db_util.check_data_model():
+    #     db_util.create_data_model()

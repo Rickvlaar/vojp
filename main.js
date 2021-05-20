@@ -1,7 +1,7 @@
 const {app, ipcMain, webContents, BrowserWindow, Menu} = require('electron')
 const path = require('path')
 const vojp = require('./vojp_interface')
-const inputTemplates = require('./templates/input_templates')
+const inputTemplates = require('./gui/templates/input_templates')
 const net = require('net')
 
 function createWindow() {
@@ -13,12 +13,12 @@ function createWindow() {
         hasShadow: true,
         backgroundColor: '#282C34',
         webPreferences: {
-            preload: path.join(__dirname, 'preload.js')
+            preload: path.join(__dirname, 'gui/preload.js')
         }
     })
 
-    win.loadFile('index.html')
-    // win.toggleDevTools()
+    win.loadFile('gui/index.html')
+    win.toggleDevTools()
     return win
 }
 

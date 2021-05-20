@@ -5,7 +5,7 @@ import opuslib
 import opuslib.api.encoder
 import opuslib.api.ctl
 import sounddevice as sd
-from vojp.objects import AudioUDPObject
+from objects import AudioUDPObject
 
 
 class AudioProcessor:

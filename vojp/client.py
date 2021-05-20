@@ -6,8 +6,8 @@ import audioop
 import opuslib
 import soundfile as sf
 from datetime import datetime
-from vojp.audio_processor import AudioProcessor
-from vojp.config import Config
+from audio_processor import AudioProcessor
+from config import Config
 
 
 class UdpClient(asyncio.DatagramProtocol):
