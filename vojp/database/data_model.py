@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String
-from database import Base
+from vojp.database import Base
 
 
 class UserSettings(Base):

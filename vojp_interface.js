@@ -3,27 +3,36 @@ const path = require('path')
 const os = require('os')
 
 
-const vojpPath = __dirname
 let commandPath
 if (os.type() !== 'Darwin') {
-    commandPath = path.normalize('venv/scripts/python')
+    commandPath = path.join(process.resourcesPath, "main")
 } else {
-    commandPath = path.normalize('venv/bin/python')
+    commandPath = path.join(process.resourcesPath, "main")
 }
 
 
 module.exports = {
     getVojpSettings: function () {
-        const vojpSettings = execSync(commandPath + ' vojp/vojp_cli.py -s', {
-            cwd: vojpPath
+        // const vojpSettings = execSync(commandPath + ' -m vojp.vojp_cli -s', {
+        //     cwd: vojpPath
+        // })
+        console.log(commandPath)
+        const vojpSettings = execSync('./main -g', {
+            cwd: commandPath
         })
+        console.log(vojpSettings.toString())
+        console.log(JSON.parse(vojpSettings.toString()))
         return JSON.parse(vojpSettings.toString())
     },
 
     startVojp: function (settings) {
         const jsonSettings = JSON.stringify(settings)
-        const vojp = spawn(commandPath, ['vojp/main.py', '-s', jsonSettings], {
-            cwd: vojpPath
+        // const vojp = spawn(commandPath, ['-m', 'vojp.main', '-s', jsonSettings], {
+        //     cwd: vojpPath
+        // })
+
+        const vojp = spawn('./main', ['-s', jsonSettings], {
+            cwd: commandPath
         })
         vojp.stdout.on('data', function (data) {
             console.log("data: ", data.toString('utf8'));

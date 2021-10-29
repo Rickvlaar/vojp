@@ -1,4 +1,4 @@
-from database import data_model, engine, Base
+from vojp.database import data_model, engine, Base
 
 
 def check_data_model():

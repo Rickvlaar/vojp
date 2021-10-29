@@ -3,6 +3,7 @@ import logging
 import argparse
 import json
 import sys
+# import vojp_cli
 from client import UdpClient
 from server import AsyncUdpServer
 from config import Config, setup_environment
@@ -16,9 +17,15 @@ async def main():
 
     cli_parser = argparse.ArgumentParser(prog='main')
     cli_parser.add_argument('-s', '--settings', help='pass settings as JSON string and start vojp')
-    args = cli_parser.parse_args()
+    cli_parser.add_argument('-g', '--get', help='returns default vojp settings', action='store_true')
 
+    args = cli_parser.parse_args()
     vojp_settings = ElectronGuiSettings()
+
+    if args.get:
+        print(ElectronGuiSettings().to_json())
+    sys.stdout.flush()
+
     if args.settings:
         vojp_settings.read_from_electron(args.settings)
         logging.info(msg='settings received: ' + args.settings)
@@ -28,8 +35,8 @@ async def main():
         test_settings = json.dumps(
                 {'ip_address'       : '127.0.0.1', 'port': '5000', 'packet_length': '10', 'buffer_size': '10',
                  'host_server'      : 'true', 'echo_mode': 'true', 'record': 'false', 'debug_level': 'DEBUG',
-                 'input_sample_rate': '48000', 'output_sample_rate': '48000', 'input_device': '1',
-                 'output_device'    : '0'})
+                 'input_sample_rate': '48000', 'output_sample_rate': '48000', 'input_device': '0',
+                 'output_device'    : '1'})
         vojp_settings.read_from_electron(test_settings)
     vojp_settings.save_config_ini()
 
@@ -78,9 +85,13 @@ def setup_logger():
                         level=logging.DEBUG, force=True)
 
 
-if __name__ == '__main__':
+def run():
     try:
         asyncio.run(main(), debug=False)
     except Exception:
         logging.info(msg='Asyncio event loop has been stopped successfully')
         logging.exception(msg='Asyncio event loop has been stopped successfully')
+
+
+if __name__ == '__main__':
+    run()
